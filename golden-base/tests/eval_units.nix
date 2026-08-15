@@ -64,11 +64,24 @@ in
     expected = false;
   };
 
+  testCollisionThrowsEvenWhenOnlyTemplateRootsRead = {
+    expr = (builtins.tryEval (builtins.deepSeq (merge.mergePacks [ packA packB ]).templateRoots null)).success;
+    expected = false;
+  };
+
   testDefaultsDeepMerge = {
     expr = (merge.mergePacks [
       (packA // { defaults = { ci = { security = false; release = true; }; }; })
       (packB // { defaults = { ci = { security = true; }; }; overrides = [ "shared.txt" ]; })
     ]).defaults.ci;
     expected = { security = true; release = true; };
+  };
+
+  testSchemaDeepMergesDescriptors = {
+    expr = (merge.mergePacks [
+      (packA // { schema = { name = { type = "string"; required = true; }; }; })
+      (packB // { schema = { name = { required = false; }; }; overrides = [ "shared.txt" ]; })
+    ]).schema.name;
+    expected = { type = "string"; required = false; };
   };
 }

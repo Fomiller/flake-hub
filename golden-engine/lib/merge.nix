@@ -32,13 +32,13 @@
         then value
         else throw "mkGolden: pack merge failed:\n  ${lib.concatStringsSep "\n  " folded.errors}";
     in
-    {
-      owners = guard folded.owners;
+    guard {
+      owners = folded.owners;
       templateRoots = lib.reverseList (map (p: p.templates) packList);
       partialRoots = builtins.filter (r: r != null) (map (p: p.partials) packList);
       defaults = lib.foldl' lib.recursiveUpdate { } (map (p: p.defaults) packList);
       registry = lib.foldl' lib.recursiveUpdate { } (map (p: p.registry) packList);
-      schema = lib.foldl' (a: p: a // p.schema) { } packList;
+      schema = lib.foldl' lib.recursiveUpdate { } (map (p: p.schema) packList);
       ownership = {
         managed = lib.concatMap (p: p.ownership.managed) packList;
         scaffold = lib.concatMap (p: p.ownership.scaffold) packList;
