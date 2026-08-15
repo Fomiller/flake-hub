@@ -27,8 +27,11 @@ The engine hardcodes no file layout and no pack names.
 
 - **No file layout.** Every path, glob, and directory name the engine ever
   touches comes from a pack (`templates`, `partials`, `ownership` globs). The
-  engine's own code has no `.gitignore`, no `README.md`, nothing filename-
-  shaped in it anywhere.
+  engine's own code has no `.gitignore`, no `README.md`, no notion of what a
+  repo looks like. The one exception is `repo.nix`: `mkGolden.nix`'s
+  `generateApp` checks for it to tell "you're at the repo root" from "you're
+  somewhere else". That name is the engine↔consumer contract, and it's the
+  only filename the engine is allowed to know.
 - **No pack-name lists.** The engine doesn't know `golden-base` or any other
   pack exists. `packs` is just a list passed in by whoever calls `mkGolden`.
   Adding a new pack never means touching engine code.

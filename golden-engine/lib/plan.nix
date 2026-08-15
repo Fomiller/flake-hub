@@ -28,8 +28,15 @@ in
       unmanaged = config.unmanaged or [ ];
       live = builtins.filter (p: !(builtins.elem p unmanaged)) emitted;
 
+      retiredAndUnmanaged = builtins.filter (u: builtins.elem u merged.ownership.retired) unmanaged;
+
+      # Reported ahead of `stale` so the contradiction gets the accurate
+      # message: a retired path is never emitted, so it is stale as well.
+      retiredButUnmanaged = map (p: "'${p}' is listed as retired but also declared unmanaged in repo.nix; a repo cannot both keep a file untouched and have it deleted")
+        retiredAndUnmanaged;
+
       stale = map (u: "unmanaged entry '${u}' in repo.nix matches no generated path")
-        (builtins.filter (u: !(builtins.elem u emitted)) unmanaged);
+        (builtins.filter (u: !(builtins.elem u emitted) && !(builtins.elem u retiredAndUnmanaged)) unmanaged);
 
       unclassified = map (p: "'${p}' is rendered by ${merged.owners.${p}} but matches no ownership glob")
         (builtins.filter (p: classOf merged.ownership p == null) live);
@@ -43,7 +50,7 @@ in
             && lib.any (g: matches g p) merged.ownership.scaffold)
           live);
 
-      errors = stale ++ unclassified ++ retiredButEmitted ++ bothClasses;
+      errors = retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted ++ bothClasses;
 
       byClass = cls: builtins.filter (p: classOf merged.ownership p == cls) live;
 

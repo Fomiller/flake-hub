@@ -27,6 +27,7 @@ let
   };
   packA = mkPack "a";
   packB = mkPack "b";
+  withPartials = pack: pack // { partials = "${fixtures}/packs/${pack.name}/partials"; };
 
   plan = import "${engineSrc}/lib/plan.nix" { inherit (pkgs) lib; };
   planFixture = {
@@ -76,6 +77,34 @@ in
   testTemplateRootsAreReversedForFirstMatchWins = {
     expr = (merge.mergePacks [ packA (packB // { overrides = [ "shared.txt" ]; }) ]).templateRoots;
     expected = [ packB.templates packA.templates ];
+  };
+
+  testPartialRootsAreReversedForFirstMatchWins = {
+    expr = (merge.mergePacks [
+      (withPartials packA)
+      ((withPartials packB) // { overrides = [ "shared.txt" "_shared.jinja" ]; })
+    ]).partialRoots;
+    expected = [ (withPartials packB).partials (withPartials packA).partials ];
+  };
+
+  testUndeclaredPartialCollisionThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (merge.mergePacks [
+        (withPartials packA)
+        ((withPartials packB) // { overrides = [ "shared.txt" ]; })
+      ]).partialRoots
+      null)).success;
+    expected = false;
+  };
+
+  testDeclaredPartialCollisionIsAllowed = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (merge.mergePacks [
+        (withPartials packA)
+        ((withPartials packB) // { overrides = [ "shared.txt" "_shared.jinja" ]; })
+      ]).partialRoots
+      null)).success;
+    expected = true;
   };
 
   testUndeclaredCollisionThrows = {
@@ -218,6 +247,18 @@ in
       { owners = { ".gitignore" = "golden-base"; "extra.txt" = "golden-base"; }; ownership = { managed = [ ".gitignore" ]; scaffold = [ ]; retired = [ ]; }; }
       (planConfig // { unmanaged = [ "extra.txt" ]; })).managed;
     expected = [ ".gitignore" ];
+  };
+
+  # Asserts the message, not just that it throws: without the guard the `stale`
+  # check throws anyway, but for the wrong reason.
+  testRetiredAndUnmanagedThrows = {
+    expr = plan.mkPlan
+      (planFixture // { ownership = planFixture.ownership // { retired = [ "old.txt" ]; }; })
+      (planConfig // { unmanaged = [ "old.txt" ]; });
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*'old.txt' is listed as retired but also declared unmanaged(.|\n)*";
+    };
   };
 
   testManagedScaffoldOverlapThrows = {

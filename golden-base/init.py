@@ -16,11 +16,16 @@ ALWAYS = ["golden-engine", "golden-base"]
 
 
 def read_versions(path: Path) -> dict[str, str]:
-    return dict(re.findall(r'(\S+)\s*=\s*"([^"]+)";', path.read_text()))
+    return dict(re.findall(r'^\s*([\w-]+)\s*=\s*"([^"]+)";', path.read_text(), re.M))
 
 
 def input_line(pack: str, version: str) -> str:
-    return f'    {pack}.url = "{REPO}?dir={pack}&ref=refs/tags/{pack}-{version}";'
+    lines = [f'    {pack}.url = "{REPO}?dir={pack}&ref=refs/tags/{pack}-{version}";']
+    # golden-engine has no inputs of its own; every other pack takes both.
+    if pack != "golden-engine":
+        lines.append(f'    {pack}.inputs.nixpkgs.follows = "nixpkgs";')
+        lines.append(f'    {pack}.inputs.golden-engine.follows = "golden-engine";')
+    return "\n".join(lines)
 
 
 def render_flake(packs: list[str], versions: dict[str, str]) -> str:

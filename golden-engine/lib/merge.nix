@@ -9,7 +9,8 @@
         packList;
 
       # path -> pack name, later packs overwrite earlier ones. A pack may only
-      # overwrite a path it declares in `overrides`.
+      # overwrite a path it declares in `overrides`. Partials are tracked
+      # separately because emittedPaths excludes them by construction.
       step = acc: pack:
         let
           emitted = paths.emittedPaths pack.templates;
@@ -19,13 +20,22 @@
           errs = map
             (rel: "${pack.name} and ${acc.owners.${rel}} both emit '${rel}'. Add it to ${pack.name}'s `overrides` if that is intended.")
             clashes;
+
+          partialRels = if pack.partials == null then [ ] else paths.listFiles pack.partials;
+          partialClashes = builtins.filter
+            (rel: acc.partialOwners ? ${rel} && !(builtins.elem rel pack.overrides))
+            partialRels;
+          partialErrs = map
+            (rel: "${pack.name} and ${acc.partialOwners.${rel}} both ship partial '${rel}'. Add it to ${pack.name}'s `overrides` if that is intended.")
+            partialClashes;
         in
         {
           owners = acc.owners // lib.genAttrs emitted (_: pack.name);
-          errors = acc.errors ++ errs;
+          partialOwners = acc.partialOwners // lib.genAttrs partialRels (_: pack.name);
+          errors = acc.errors ++ errs ++ partialErrs;
         };
 
-      folded = lib.foldl' step { owners = { }; errors = partialProblems; } packList;
+      folded = lib.foldl' step { owners = { }; partialOwners = { }; errors = partialProblems; } packList;
 
       guard = value:
         if folded.errors == [ ]
@@ -35,7 +45,7 @@
     guard {
       owners = folded.owners;
       templateRoots = lib.reverseList (map (p: p.templates) packList);
-      partialRoots = builtins.filter (r: r != null) (map (p: p.partials) packList);
+      partialRoots = lib.reverseList (builtins.filter (r: r != null) (map (p: p.partials) packList));
       defaults = lib.foldl' lib.recursiveUpdate { } (map (p: p.defaults) packList);
       registry = lib.foldl' lib.recursiveUpdate { } (map (p: p.registry) packList);
       schema = lib.foldl' lib.recursiveUpdate { } (map (p: p.schema) packList);

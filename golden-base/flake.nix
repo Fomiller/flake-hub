@@ -82,6 +82,18 @@
               touch $out
             '';
 
+          # Builds nothing but filesDrv, against a repo.nix whose plan is
+          # invalid. If instantiating filesDrv succeeds, planChecksum has
+          # stopped forcing the plan guards and this check throws.
+          checks.plan-guard-forces-on-files-drv =
+            let
+              golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo-invalid.nix);
+              attempt = builtins.tryEval (builtins.seq golden.filesDrv.drvPath true);
+            in
+            if attempt.success
+            then throw "plan-guard: building filesDrv alone did not force the plan guard (planChecksum missing from mkGolden.nix?)"
+            else pkgs.runCommand "plan-guard-forces-on-files-drv" { } "touch $out";
+
           apps.init = {
             type = "app";
             program = toString (pkgs.writeShellScript "golden-init" ''
