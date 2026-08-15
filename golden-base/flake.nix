@@ -38,6 +38,16 @@
               diff -ru ${./tests/expected/gitignore-default} ${golden.filesDrv}
               touch $out
             '';
+
+          checks.engine-python = pkgs.runCommand "engine-python-tests"
+            { nativeBuildInputs = [ pkgs.python3Packages.pytest ]; }
+            ''
+              cp -r ${golden-engine.src} engine
+              chmod -R +w engine
+              cd engine
+              pytest tests -q
+              touch $out
+            '';
         })
     // {
       pack = import ./pack.nix;
