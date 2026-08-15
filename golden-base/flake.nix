@@ -35,7 +35,7 @@
               golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix);
             in
             pkgs.runCommand "render-snapshot" { } ''
-              diff -ru ${./tests/expected/gitignore-default} ${golden.filesDrv}
+              diff -ru ${./tests/expected/default} ${golden.filesDrv}
               touch $out
             '';
 
@@ -66,6 +66,19 @@
 
               diff ../first-sums ../second-sums
               grep -q '0 change(s)' ../second-log
+              touch $out
+            '';
+
+          checks.render-customized =
+            let
+              golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo-customized.nix);
+            in
+            pkgs.runCommand "render-customized" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+              mkdir -p scratch && cd scratch
+              python3 ${golden-engine.src}/lib/reconcile.py \
+                --files ${golden.filesDrv} --plan ${golden.plan} --root .
+              cd ..
+              diff -ru ${./tests/expected/customized} scratch
               touch $out
             '';
 

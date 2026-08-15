@@ -2,12 +2,22 @@
   name = "golden-base";
   templates = ./templates;
   partials = ./partials;
-  defaults = { };
+  defaults = {
+    description = "";
+    just.recipes = [ ];
+    unmanaged = [ ];
+  };
   registry = { };
-  ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
+  ownership = {
+    managed = [ ".gitignore" ".editorconfig" ".envrc" "justfile" ];
+    scaffold = [ "README.md" ];
+    retired = [ ];
+  };
   overrides = [ ];
   schema = {
     "name" = { type = "string"; required = true; };
+    "description" = { type = "string"; };
+    "just.recipes" = { type = "list"; };
     "unmanaged" = { type = "list"; };
   };
 }

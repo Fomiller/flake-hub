@@ -1,0 +1,15 @@
+{% include "_header.jinja" %}
+
+import? 'just/base.just'
+
+project := "{{ name }}"
+
+fetch:
+    curl -sSfL https://raw.githubusercontent.com/Fomiller/justfiles/refs/heads/main/base.just > just/base.just
+
+generate:
+    nix run .#generate
+{% for recipe in just.recipes %}
+
+{{ recipe }}
+{% endfor %}
