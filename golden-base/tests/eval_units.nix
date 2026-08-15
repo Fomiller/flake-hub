@@ -2,6 +2,19 @@
 let
   paths = import "${engineSrc}/lib/paths.nix" { lib = pkgs.lib; };
   fixture = "${fixtures}/paths";
+  merge = import "${engineSrc}/lib/merge.nix" { inherit (pkgs) lib; inherit paths; };
+  mkPack = name: {
+    inherit name;
+    templates = "${fixtures}/packs/${name}/templates";
+    partials = null;
+    defaults = { };
+    registry = { };
+    ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
+    overrides = [ ];
+    schema = { };
+  };
+  packA = mkPack "a";
+  packB = mkPack "b";
 in
 {
   testHarnessRuns = { expr = 1 + 1; expected = 2; };
@@ -29,5 +42,33 @@ in
   testPartialViolationsFlagsOrphanInPartialsRoot = {
     expr = paths.partialViolations "${fixture}/partials";
     expected = [ "orphan.jinja" ];
+  };
+
+  testMergeUnionsEmittedPaths = {
+    expr = builtins.sort builtins.lessThan (builtins.attrNames (merge.mergePacks [ packA (packB // { overrides = [ "shared.txt" ]; }) ]).owners);
+    expected = [ "only-a.txt" "shared.txt" ];
+  };
+
+  testLaterPackWinsWhenItDeclaresOverride = {
+    expr = (merge.mergePacks [ packA (packB // { overrides = [ "shared.txt" ]; }) ]).owners."shared.txt";
+    expected = "b";
+  };
+
+  testTemplateRootsAreReversedForFirstMatchWins = {
+    expr = (merge.mergePacks [ packA (packB // { overrides = [ "shared.txt" ]; }) ]).templateRoots;
+    expected = [ packB.templates packA.templates ];
+  };
+
+  testUndeclaredCollisionThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq (merge.mergePacks [ packA packB ]).owners null)).success;
+    expected = false;
+  };
+
+  testDefaultsDeepMerge = {
+    expr = (merge.mergePacks [
+      (packA // { defaults = { ci = { security = false; release = true; }; }; })
+      (packB // { defaults = { ci = { security = true; }; }; overrides = [ "shared.txt" ]; })
+    ]).defaults.ci;
+    expected = { security = true; release = true; };
   };
 }
