@@ -174,4 +174,49 @@ in
       (plan.mkPlan planFixture (planConfig // { unmanaged = [ "not-generated.txt" ]; })) null)).success;
     expected = false;
   };
+
+  testGlobMatchesLiteralMetacharacter = {
+    expr =
+      let
+        matched = plan.mkPlan
+          { owners = { "foo+bar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; }
+          planConfig;
+        unrelatedThrows = (builtins.tryEval (builtins.deepSeq
+          (plan.mkPlan
+            { owners = { "foobar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; }
+            planConfig) null)).success;
+      in
+      { managed = matched.managed; unrelatedThrows = unrelatedThrows; };
+    expected = { managed = [ "foo+bar" ]; unrelatedThrows = false; };
+  };
+
+  testGlobWithParenDoesNotCrash = {
+    expr = (plan.mkPlan
+      { owners = { "a(b" = "golden-base"; }; ownership = { managed = [ "a(b" ]; scaffold = [ ]; retired = [ ]; }; }
+      planConfig).managed;
+    expected = [ "a(b" ];
+  };
+
+  testRetiredPathStillEmittedThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (plan.mkPlan
+        (planFixture // { ownership = planFixture.ownership // { retired = [ ".gitignore" ]; }; })
+        planConfig) null)).success;
+    expected = false;
+  };
+
+  testUnmanagedPathNeedsNoOwnershipGlob = {
+    expr = (plan.mkPlan
+      { owners = { ".gitignore" = "golden-base"; "extra.txt" = "golden-base"; }; ownership = { managed = [ ".gitignore" ]; scaffold = [ ]; retired = [ ]; }; }
+      (planConfig // { unmanaged = [ "extra.txt" ]; })).managed;
+    expected = [ ".gitignore" ];
+  };
+
+  testManagedScaffoldOverlapThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (plan.mkPlan
+        (planFixture // { ownership = planFixture.ownership // { scaffold = [ "**" ]; }; })
+        planConfig) null)).success;
+    expected = false;
+  };
 }
