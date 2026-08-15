@@ -12,6 +12,13 @@
       (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          evalUnits = pkgs.writeText "eval_units.nix" ''
+            import ${./tests/eval_units.nix} {
+              pkgs = import ${nixpkgs} { system = "${system}"; };
+              engineSrc = "${golden-engine.src}";
+              fixtures = "${./tests/fixtures}";
+            }
+          '';
         in
         {
           apps.test-eval = {
@@ -19,7 +26,7 @@
             program = toString (pkgs.writeShellScript "test-eval" ''
               exec ${pkgs.nix-unit}/bin/nix-unit \
                 --eval-store auto \
-                ${./tests/eval_units.nix}
+                ${evalUnits}
             '');
           };
         })
