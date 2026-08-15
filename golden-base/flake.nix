@@ -82,6 +82,22 @@
               touch $out
             '';
 
+          apps.init = {
+            type = "app";
+            program = toString (pkgs.writeShellScript "golden-init" ''
+              exec ${pkgs.python3}/bin/python3 ${./init.py} \
+                --versions ${./pack-versions.nix} "$@"
+            '');
+          };
+
+          checks.init = pkgs.runCommand "init-tests"
+            { nativeBuildInputs = [ pkgs.python3Packages.pytest ]; }
+            ''
+              cp -r ${./.} base && chmod -R +w base && cd base
+              pytest tests/init_test.py -q
+              touch $out
+            '';
+
           checks.generate-app =
             let
               golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix);
