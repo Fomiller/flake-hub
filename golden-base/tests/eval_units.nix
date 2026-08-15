@@ -12,6 +12,7 @@ let
       "language" = { type = "enum"; values = [ "go" "rust" ]; };
       "service.container" = { type = "bool"; };
       "unmanaged" = { type = "list"; };
+      "meta" = { type = "attrs"; };
     };
   };
   mkPack = name: {
@@ -119,5 +120,23 @@ in
   testNestedKeyValidatesByDottedName = {
     expr = (config.mergeConfig mergedFixture { name = "x"; service.container = false; }).service.container;
     expected = false;
+  };
+
+  testAttrsTypedKeyAcceptsPopulatedValue = {
+    expr = (config.mergeConfig mergedFixture { name = "x"; meta = { a = "1"; b = "2"; }; }).meta;
+    expected = { a = "1"; b = "2"; };
+  };
+
+  testAttrsTypedKeyAcceptsEmptyValue = {
+    expr = (config.mergeConfig mergedFixture { name = "x"; meta = { }; }).meta;
+    expected = { };
+  };
+
+  testRequiredAttrsKeyIsSatisfiedWhenSet = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (config.mergeConfig (mergedFixture // {
+        schema = mergedFixture.schema // { "meta" = { type = "attrs"; required = true; }; };
+      }) { name = "x"; meta = { a = "1"; }; }) null)).success;
+    expected = true;
   };
 }
