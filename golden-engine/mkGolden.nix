@@ -34,7 +34,22 @@ let
         --undefined strict \
         --exclude-pattern '_*'
     '';
+
+  generateApp = {
+    type = "app";
+    program = toString (pkgs.writeShellScript "golden-generate" ''
+      set -euo pipefail
+      if [ ! -e repo.nix ]; then
+        echo "generate: run this from the repo root (no repo.nix here)" >&2
+        exit 1
+      fi
+      exec ${pkgs.python3}/bin/python3 ${./lib/reconcile.py} \
+        --files ${filesDrv} \
+        --plan ${plan} \
+        --root .
+    '');
+  };
 in
 {
-  inherit filesDrv plan mergedConfig;
+  inherit filesDrv plan generateApp mergedConfig;
 }

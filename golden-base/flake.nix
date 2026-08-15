@@ -48,6 +48,26 @@
               pytest tests -q
               touch $out
             '';
+
+          checks.generate-is-idempotent =
+            let
+              golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix);
+            in
+            pkgs.runCommand "generate-is-idempotent" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+              mkdir -p repo && cd repo
+              python3 ${golden-engine.src}/lib/reconcile.py \
+                --files ${golden.filesDrv} --plan ${golden.plan} --root .
+              find . -type f | sort > ../first
+              sha256sum $(find . -type f | sort) > ../first-sums
+
+              python3 ${golden-engine.src}/lib/reconcile.py \
+                --files ${golden.filesDrv} --plan ${golden.plan} --root . | tee ../second-log
+              sha256sum $(find . -type f | sort) > ../second-sums
+
+              diff ../first-sums ../second-sums
+              grep -q '0 change(s)' ../second-log
+              touch $out
+            '';
         })
     // {
       pack = import ./pack.nix;
