@@ -27,6 +27,13 @@ let
   };
   packA = mkPack "a";
   packB = mkPack "b";
+
+  plan = import "${engineSrc}/lib/plan.nix" { inherit (pkgs) lib; };
+  planFixture = {
+    owners = { ".gitignore" = "golden-base"; };
+    ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
+  };
+  planConfig = { name = "x"; unmanaged = [ ]; };
 in
 {
   testHarnessRuns = { expr = 1 + 1; expected = 2; };
@@ -144,5 +151,27 @@ in
         schema = mergedFixture.schema // { "meta" = { type = "attrs"; required = true; }; };
       }) { name = "x"; meta = { a = "1"; }; }) null)).success;
     expected = true;
+  };
+
+  testPathsClassifyByGlob = {
+    expr = (plan.mkPlan planFixture planConfig).managed;
+    expected = [ ".gitignore" ];
+  };
+
+  testUnmanagedPathLeavesManagedList = {
+    expr = (plan.mkPlan planFixture (planConfig // { unmanaged = [ ".gitignore" ]; })).managed;
+    expected = [ ];
+  };
+
+  testUnclassifiedPathThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (plan.mkPlan (planFixture // { ownership = { managed = [ "nope/**" ]; scaffold = [ ]; retired = [ ]; }; }) planConfig) null)).success;
+    expected = false;
+  };
+
+  testStaleUnmanagedEntryThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (plan.mkPlan planFixture (planConfig // { unmanaged = [ "not-generated.txt" ]; })) null)).success;
+    expected = false;
   };
 }

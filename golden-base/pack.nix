@@ -8,5 +8,6 @@
   overrides = [ ];
   schema = {
     "name" = { type = "string"; required = true; };
+    "unmanaged" = { type = "list"; };
   };
 }
