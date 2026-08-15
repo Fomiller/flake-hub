@@ -41,6 +41,22 @@ input:
 golden-base.url = "path:/abs/path/to/flake-hub/golden-base";
 ```
 
+If you're testing a consumer repo against a local checkout, you need a third
+override, not just the obvious two:
+
+```bash
+nix run .#generate \
+  --override-input golden-engine path:/abs/path/to/flake-hub/golden-engine \
+  --override-input golden-base   path:/abs/path/to/flake-hub/golden-base \
+  --override-input golden-base/golden-engine path:/abs/path/to/flake-hub/golden-engine
+```
+
+`golden-base`'s own flake pins `golden-engine` as a relative-path input, and a
+top-level `--override-input` doesn't reach a transitive input of another
+input. Skip the third override and `golden-base` comes from your checkout
+while `golden-engine` comes from wherever `golden-base`'s lock file points —
+the two can silently disagree.
+
 ## Docs
 
 Fuller docs (how packs, ownership classes, and the reconcile step fit
