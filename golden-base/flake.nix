@@ -68,6 +68,32 @@
               grep -q '0 change(s)' ../second-log
               touch $out
             '';
+
+          checks.generate-app =
+            let
+              golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix);
+            in
+            pkgs.runCommand "generate-app" { } ''
+              mkdir -p happy && cd happy
+              cp ${./tests/fixtures/repo.nix} repo.nix
+              ${golden.generateApp.program}
+              test -f .gitignore
+              grep -q 'GENERATED FILE' .gitignore
+              cd ..
+
+              mkdir -p noguard && cd noguard
+              set +e
+              ${golden.generateApp.program} 2>stderr.log
+              status=$?
+              set -e
+              if [ "$status" -eq 0 ]; then
+                echo "expected generateApp to fail without repo.nix" >&2
+                exit 1
+              fi
+              grep -q 'run this from the repo root' stderr.log
+
+              touch $out
+            '';
         })
     // {
       pack = import ./pack.nix;
