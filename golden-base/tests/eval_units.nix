@@ -132,6 +132,12 @@ in
     expected = { };
   };
 
+  testUndeclaredEmptyAttrsKeyThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (config.mergeConfig mergedFixture { name = "x"; bogus = { }; }) null)).success;
+    expected = false;
+  };
+
   testRequiredAttrsKeyIsSatisfiedWhenSet = {
     expr = (builtins.tryEval (builtins.deepSeq
       (config.mergeConfig (mergedFixture // {
