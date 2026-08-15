@@ -45,6 +45,28 @@ The pre-1.0 MINOR rule is a choice, not a general truth. Surface it as a pack
 option rather than baking it in: a repo already past 1.0 wants normal semver,
 and the script handles both.
 
+## The executable bit — build this before shipping next-version.sh
+
+`reconcile.py` hardcodes `dst.chmod(0o644)`, so today no generated file can be
+executable. The plan JSON has no vocabulary for file mode at all. That blocks
+`next-version.sh`, which has to be runnable.
+
+Decision: a per-pack `executable` glob list, resolved the same way the
+ownership globs are. Not file mode carried per path in the plan JSON. The globs
+match how a pack already declares `managed` / `scaffold` / `retired`, and they
+keep the plan describing classification rather than filesystem detail.
+
+Build it in plan 3, before `golden-service` ships. Work involved:
+
+- `pack.nix` gains an `executable` list of globs.
+- `merge.nix` unions it across packs like the other ownership lists.
+- `plan.nix` resolves the globs to concrete paths and emits them in the plan.
+- `reconcile.py` stops hardcoding `0o644` and reads the mode from the plan.
+- A test proving a matched path lands `0o755` and an unmatched one `0o644`.
+
+Retrofitting after packs are tagged means a coordinated re-release across every
+pack, so do it while nothing is tagged.
+
 ## Terraform ECR unit — take it as-is
 
 `infra/units/aws/global/ecr` plus the four `infra/live/*.hcl` files. About 50
