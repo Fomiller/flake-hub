@@ -29,6 +29,15 @@
                 ${evalUnits}
             '');
           };
+
+          checks.render-snapshot =
+            let
+              golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix);
+            in
+            pkgs.runCommand "render-snapshot" { } ''
+              diff -ru ${./tests/expected/gitignore-default} ${golden.filesDrv}
+              touch $out
+            '';
         })
     // {
       pack = import ./pack.nix;

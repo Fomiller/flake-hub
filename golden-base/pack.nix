@@ -4,7 +4,9 @@
   partials = ./partials;
   defaults = { };
   registry = { };
-  ownership = { managed = [ ]; scaffold = [ ]; retired = [ ]; };
+  ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
   overrides = [ ];
-  schema = { };
+  schema = {
+    "name" = { type = "string"; required = true; };
+  };
 }
