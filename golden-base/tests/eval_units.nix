@@ -141,15 +141,19 @@ in
 
   testUndeclaredEmptyAttrsKeyThrows = {
     expr = (builtins.tryEval (builtins.deepSeq
-      (config.mergeConfig mergedFixture { name = "x"; bogus = { }; }) null)).success;
+      (config.mergeConfig mergedFixture { name = "x"; bogus = { }; })
+      null)).success;
     expected = false;
   };
 
   testRequiredAttrsKeyIsSatisfiedWhenSet = {
     expr = (builtins.tryEval (builtins.deepSeq
-      (config.mergeConfig (mergedFixture // {
-        schema = mergedFixture.schema // { "meta" = { type = "attrs"; required = true; }; };
-      }) { name = "x"; meta = { a = "1"; }; }) null)).success;
+      (config.mergeConfig
+        (mergedFixture // {
+          schema = mergedFixture.schema // { "meta" = { type = "attrs"; required = true; }; };
+        })
+        { name = "x"; meta = { a = "1"; }; })
+      null)).success;
     expected = true;
   };
 
@@ -165,13 +169,15 @@ in
 
   testUnclassifiedPathThrows = {
     expr = (builtins.tryEval (builtins.deepSeq
-      (plan.mkPlan (planFixture // { ownership = { managed = [ "nope/**" ]; scaffold = [ ]; retired = [ ]; }; }) planConfig) null)).success;
+      (plan.mkPlan (planFixture // { ownership = { managed = [ "nope/**" ]; scaffold = [ ]; retired = [ ]; }; }) planConfig)
+      null)).success;
     expected = false;
   };
 
   testStaleUnmanagedEntryThrows = {
     expr = (builtins.tryEval (builtins.deepSeq
-      (plan.mkPlan planFixture (planConfig // { unmanaged = [ "not-generated.txt" ]; })) null)).success;
+      (plan.mkPlan planFixture (planConfig // { unmanaged = [ "not-generated.txt" ]; }))
+      null)).success;
     expected = false;
   };
 
@@ -184,7 +190,8 @@ in
         unrelatedThrows = (builtins.tryEval (builtins.deepSeq
           (plan.mkPlan
             { owners = { "foobar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; }
-            planConfig) null)).success;
+            planConfig)
+          null)).success;
       in
       { managed = matched.managed; unrelatedThrows = unrelatedThrows; };
     expected = { managed = [ "foo+bar" ]; unrelatedThrows = false; };
@@ -201,7 +208,8 @@ in
     expr = (builtins.tryEval (builtins.deepSeq
       (plan.mkPlan
         (planFixture // { ownership = planFixture.ownership // { retired = [ ".gitignore" ]; }; })
-        planConfig) null)).success;
+        planConfig)
+      null)).success;
     expected = false;
   };
 
@@ -216,7 +224,8 @@ in
     expr = (builtins.tryEval (builtins.deepSeq
       (plan.mkPlan
         (planFixture // { ownership = planFixture.ownership // { scaffold = [ "**" ]; }; })
-        planConfig) null)).success;
+        planConfig)
+      null)).success;
     expected = false;
   };
 }

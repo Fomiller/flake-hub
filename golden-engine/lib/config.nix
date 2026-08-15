@@ -9,9 +9,11 @@ let
         && (value == { } || ((schema.${prefix}.type or null) == "attrs"));
     in
     if builtins.isAttrs value && !isLeafAttrs
-    then lib.concatLists (lib.mapAttrsToList
-      (k: v: flatten schema (if prefix == "" then k else "${prefix}.${k}") v)
-      value)
+    then
+      lib.concatLists
+        (lib.mapAttrsToList
+          (k: v: flatten schema (if prefix == "" then k else "${prefix}.${k}") v)
+          value)
     else [{ key = prefix; inherit value; }];
 
   typeOk = key: entry: value:
