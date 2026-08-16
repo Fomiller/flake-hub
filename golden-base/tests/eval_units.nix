@@ -127,6 +127,43 @@ in
     expected = { security = true; release = true; };
   };
 
+  testPackDefaultListsConcatenateInPackOrder = {
+    expr = (merge.mergePacks [
+      (packA // { defaults = { ci.steps = [ "a" ]; }; })
+      (packB // { defaults = { ci.steps = [ "b" ]; }; overrides = [ "shared.txt" ]; })
+    ]).defaults.ci.steps;
+    expected = [ "a" "b" ];
+  };
+
+  testRepoConfigReplacesAListRatherThanAppending = {
+    expr = (config.mergeConfig
+      (mergedFixture // {
+        defaults = { ci.steps = [ "a" "b" ]; };
+        schema = mergedFixture.schema // { "ci.steps" = { type = "list"; }; };
+      })
+      { name = "x"; ci.steps = [ ]; }).ci.steps;
+    expected = [ ];
+  };
+
+  testIntTypeAccepted = {
+    expr = (config.mergeConfig
+      (mergedFixture // { schema = mergedFixture.schema // { "service.port" = { type = "int"; }; }; })
+      { name = "x"; service.port = 8080; }).service.port;
+    expected = 8080;
+  };
+
+  # Asserts the message. Without the `int` branch this throws anyway, but for
+  # the wrong reason: unknown type rather than failed schema.
+  testIntTypeRejectsString = {
+    expr = config.mergeConfig
+      (mergedFixture // { schema = mergedFixture.schema // { "service.port" = { type = "int"; }; }; })
+      { name = "x"; service.port = "8080"; };
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*key 'service.port' in repo.nix failed its schema: expected int(.|\n)*";
+    };
+  };
+
   testSchemaDeepMergesDescriptors = {
     expr = (merge.mergePacks [
       (packA // { schema = { name = { type = "string"; required = true; }; }; })

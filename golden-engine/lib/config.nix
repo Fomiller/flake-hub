@@ -19,6 +19,7 @@ let
   typeOk = key: entry: value:
     if entry.type == "string" then builtins.isString value
     else if entry.type == "bool" then builtins.isBool value
+    else if entry.type == "int" then builtins.isInt value
     else if entry.type == "list" then builtins.isList value
     else if entry.type == "attrs" then builtins.isAttrs value
     else if entry.type == "enum" then builtins.elem value entry.values

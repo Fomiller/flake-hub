@@ -1,5 +1,27 @@
 { lib, paths }:
+let
+  # Packs are additive, so two packs contributing to the same list both keep
+  # their entries. repo.nix is not additive: config.nix uses recursiveUpdate,
+  # so a repo can still clear an inherited list with [ ].
+  mergeDefaults = defaultsList:
+    let
+      merge2 = a: b:
+        let
+          keys = lib.unique (builtins.attrNames a ++ builtins.attrNames b);
+          pick = k:
+            if !(a ? ${k}) then b.${k}
+            else if !(b ? ${k}) then a.${k}
+            else if builtins.isList a.${k} && builtins.isList b.${k} then a.${k} ++ b.${k}
+            else if builtins.isAttrs a.${k} && builtins.isAttrs b.${k} then merge2 a.${k} b.${k}
+            else b.${k};
+        in
+        lib.genAttrs keys pick;
+    in
+    lib.foldl' merge2 { } defaultsList;
+in
 {
+  inherit mergeDefaults;
+
   mergePacks = packList:
     let
       partialProblems = lib.concatMap
@@ -46,7 +68,7 @@
       owners = folded.owners;
       templateRoots = lib.reverseList (map (p: p.templates) packList);
       partialRoots = lib.reverseList (builtins.filter (r: r != null) (map (p: p.partials) packList));
-      defaults = lib.foldl' lib.recursiveUpdate { } (map (p: p.defaults) packList);
+      defaults = mergeDefaults (map (p: p.defaults) packList);
       registry = lib.foldl' lib.recursiveUpdate { } (map (p: p.registry) packList);
       schema = lib.foldl' lib.recursiveUpdate { } (map (p: p.schema) packList);
       executable = lib.concatMap (p: p.executable) packList;
