@@ -58,6 +58,12 @@
               helm template test ./chart > rendered.yaml
               helm lint ./chart
               grep -q 'containerPort: 8080' rendered.yaml
+              grep -q 'name: test-svc-go' rendered.yaml
+
+              # The overlay base values set fullnameOverride. A helper that
+              # ignores it makes that file a lie, and renders fine either way.
+              helm template test ./chart --set fullnameOverride=pinned > override.yaml
+              grep -q 'name: pinned' override.yaml
               touch $out
             '';
 
