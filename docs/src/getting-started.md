@@ -14,6 +14,13 @@ nix run github:Fomiller/flake-hub?dir=golden-base#init -- \
 `flake.nix` and `repo.nix` and refuses to overwrite either if it already
 exists.
 
+`golden-service` marks `language` required and has no default for it, so add it
+to `repo.nix` before the first run:
+
+```nix
+language = "go";
+```
+
 Then generate:
 
 ```sh

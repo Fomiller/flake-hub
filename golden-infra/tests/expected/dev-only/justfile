@@ -13,7 +13,7 @@ generate:
     nix run .#generate
 
 plan env="dev":
-    just tg-plan {{env}}
+    cd infra/live/{{env}} && terragrunt run-all plan
 
 apply env="dev":
-    just tg-apply {{env}}
+    cd infra/live/{{env}} && terragrunt run-all apply

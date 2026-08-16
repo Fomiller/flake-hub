@@ -8,13 +8,16 @@ runs `nix run .#generate` to bring its working tree in line.
 
 Each flake lives in its own top-level directory.
 
-| Directory      | What it is                                             |
-| -------------- | ------------------------------------------------------- |
-| `golden-engine`| The driver. Merges packs, renders templates, builds the ownership plan. |
-| `golden-base`  | A pack. Files every repo gets, no matter what it is.    |
-
-More packs are planned (a GitHub-workflows pack, a service pack, an infra
-pack, an ArgoCD pack) but only `golden-engine` and `golden-base` exist today.
+| Directory        | What it is                                                              |
+| ---------------- | ----------------------------------------------------------------------- |
+| `golden-engine`  | The driver. Merges packs, renders templates, builds the ownership plan.  |
+| `golden-base`    | A pack. Files every repo gets, no matter what it is.                     |
+| `golden-github`  | A pack. The files GitHub itself reads.                                   |
+| `golden-service` | A pack. What a compiled service needs, per language.                     |
+| `golden-infra`   | A pack. Terragrunt scaffolding and the deploy workflow.                  |
+| `golden-argocd`  | A pack. The Helm chart and the image-build workflow.                     |
+| `renovate`       | The Renovate preset repos extend, so pack updates land as PRs.           |
+| `docs`           | The mdbook. Its config reference is generated from the packs.            |
 
 ## Referencing a flake
 
@@ -59,8 +62,11 @@ the two can silently disagree.
 
 ## Docs
 
-Fuller docs (how packs, ownership classes, and the reconcile step fit
-together) are planned but not written yet.
+`docs/` is an mdbook covering ownership classes, how packs compose, how a
+release propagates, and how to write a pack. Build it with
+`nix build ./docs#checks.<system>.book-builds`, or read the sources under
+`docs/src`. Every config and file table in it is generated from the
+packs themselves, so it cannot drift.
 
 ## Contributing
 

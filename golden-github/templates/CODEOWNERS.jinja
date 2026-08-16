@@ -1,3 +1,4 @@
 {% include "_github_header.jinja" %}
 
-* {{ codeowners | join(" ") }}
+{% if codeowners %}* {{ codeowners | join(" ") }}
+{% endif %}

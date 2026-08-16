@@ -23,7 +23,7 @@ jobs:
 {# The lookup happens here because pack defaults are static data and cannot
    read `language`. So this template does know the shape of the `languages`
    registry, even though the pack that contributes the job does not name it. #}
-{% if job.stepsFrom == "language" %}
+{% if job.stepsFrom | default("", true) == "language" %}
 {{ languages[language].setupStep | indent(6, true) }}
       - name: build
         run: {{ languages[language].buildCmd }}

@@ -17,7 +17,7 @@ in
   testBothHeaderPartialsSurviveTheMerge = {
     expr = builtins.sort builtins.lessThan
       (pkgs.lib.concatMap paths.listFiles merged.partialRoots);
-    expected = [ "_github_header.jinja" "_header.jinja" ];
+    expected = [ "_base_header.jinja" "_github_header.jinja" ];
   };
 
   testMergingTheTwoPacksDoesNotCollide = {

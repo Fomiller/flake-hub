@@ -21,8 +21,15 @@
             pkgs
             (import fixture);
 
-          snapshot = name: expected: fixture:
+          # The loop only visits files the expected tree already has, so an
+          # emptied expected tree would pass silently. The count is the guard.
+          snapshot = name: count: expected: fixture:
             pkgs.runCommand "render-${name}" { } ''
+              found=$(cd ${expected} && find . -type f | wc -l)
+              if [ "$found" -ne ${toString count} ]; then
+                echo "expected tree for ${name} holds $found files, not ${toString count}" >&2
+                exit 1
+              fi
               for f in $(cd ${expected} && find . -type f | sed 's|^\./||'); do
                 diff -u "${expected}/$f" "${(render fixture).filesDrv}/$f"
               done
@@ -35,8 +42,8 @@
           packages.files-dev-only = (render ./tests/fixtures/dev-only.nix).filesDrv;
           packages.files-all-envs = (render ./tests/fixtures/all-envs.nix).filesDrv;
 
-          checks.render-dev-only = snapshot "dev-only" ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
-          checks.render-all-envs = snapshot "all-envs" ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
+          checks.render-dev-only = snapshot "dev-only" 6 ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
+          checks.render-all-envs = snapshot "all-envs" 10 ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
 
           # Each environment is a separate gated template, so a repo that does
           # not select an environment must not get its directory at all.
@@ -54,9 +61,20 @@
 
           # {{env}} is just syntax that has to survive Jinja untouched.
           checks.just-recipes-keep-their-braces = pkgs.runCommand "just-recipes-keep-their-braces" { } ''
-            grep -q 'just tg-plan {{env}}' ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile
+            grep -q 'cd infra/live/{{env}} && terragrunt run-all plan' ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile
             touch $out
           '';
+
+          checks.rendered-justfile-parses = pkgs.runCommand "rendered-justfile-parses"
+            { nativeBuildInputs = [ pkgs.just ]; }
+            ''
+              mkdir -p repo && cd repo
+              cp ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile .
+              chmod +w justfile
+              just --list
+              just --evaluate >/dev/null
+              touch $out
+            '';
 
           checks.rendered-workflows-lint = pkgs.runCommand "rendered-workflows-lint"
             { nativeBuildInputs = [ pkgs.actionlint ]; }

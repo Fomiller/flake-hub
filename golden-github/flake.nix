@@ -19,6 +19,18 @@
             }
             pkgs
             (import ./tests/fixtures/repo.nix);
+          ownJob = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/own-job.nix);
+          emptyOwners = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/empty-owners.nix);
           evalUnits = pkgs.writeText "eval_units.nix" ''
             import ${./tests/eval_units.nix} {
               pkgs = import ${nixpkgs} { system = "${system}"; };
@@ -29,10 +41,30 @@
           '';
         in
         {
+          # Building this is how you refresh the snapshot after a template
+          # change: `nix build .#files-default` and diff against tests/expected.
+          packages.files-default = golden.filesDrv;
+
+          # Also a check, not only an app: without this the cases run only when
+          # someone remembers to, and `nix flake check` reports green regardless.
+          checks.eval-units = pkgs.runCommand "eval-units"
+            { nativeBuildInputs = [ pkgs.nix-unit ]; }
+            ''
+              nix-unit ${evalUnits}
+              touch $out
+            '';
+
           # The snapshot covers only this pack's own paths. golden-base's files
           # are already covered by golden-base's snapshot; asserting them here
           # would mean two places to update for one change.
           checks.render-snapshot = pkgs.runCommand "github-render-snapshot" { } ''
+            # The loop only visits files the expected tree already has, so an
+            # emptied expected tree would pass silently. The count is the guard.
+            found=$(cd ${./tests/expected/default} && find . -type f | wc -l)
+            if [ "$found" -ne 3 ]; then
+              echo "expected tree holds $found files, not 3" >&2
+              exit 1
+            fi
             for f in $(cd ${./tests/expected/default} && find . -type f | sed 's|^\./||'); do
               diff -u "${./tests/expected/default}/$f" "${golden.filesDrv}/$f"
             done
@@ -53,6 +85,30 @@
           checks.no-jobs-means-no-ci-workflow = pkgs.runCommand "no-jobs-means-no-ci-workflow" { } ''
             if [ -e ${golden.filesDrv}/.github/workflows/ci.yml ]; then
               echo "ci.jobs is empty but ci.yml was still rendered" >&2
+              exit 1
+            fi
+            touch $out
+          '';
+
+          # `stepsFrom` is how golden-service asks for language steps. A repo
+          # writing its own job has no reason to set it, and under
+          # --undefined strict a bare comparison against it raises.
+          checks.a-job-without-stepsFrom-renders = pkgs.runCommand "a-job-without-stepsFrom-renders"
+            { nativeBuildInputs = [ pkgs.actionlint ]; }
+            ''
+              mkdir -p repo && cd repo
+              cp -r ${ownJob.filesDrv}/.github .
+              chmod -R +w .github
+              grep -q 'make docs' .github/workflows/ci.yml
+              actionlint .github/workflows/*.yml
+              touch $out
+            '';
+
+          # A rule with a pattern and no owners means "no review required for
+          # anything" — the opposite of what this pack is for. Emit no rule.
+          checks.empty-codeowners-emits-no-rule = pkgs.runCommand "empty-codeowners-emits-no-rule" { } ''
+            if grep -q '^\*' ${emptyOwners.filesDrv}/CODEOWNERS; then
+              echo "codeowners is empty but CODEOWNERS still carries a rule" >&2
               exit 1
             fi
             touch $out

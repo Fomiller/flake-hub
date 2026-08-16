@@ -13,8 +13,8 @@
     # {{env}} is just syntax, and it survives as-is: the base template emits
     # these strings with {{ recipe }}, and Jinja does not re-render data.
     just.recipes = [
-      "plan env=\"dev\":\n    just tg-plan {{env}}"
-      "apply env=\"dev\":\n    just tg-apply {{env}}"
+      "plan env=\"dev\":\n    cd infra/live/{{env}} && terragrunt run-all plan"
+      "apply env=\"dev\":\n    cd infra/live/{{env}} && terragrunt run-all apply"
     ];
   };
   registry = { };

@@ -13,7 +13,7 @@ generate:
     nix run .#generate
 
 build:
-    just _lang-build
+    go build ./...
 
 test:
-    just _lang-test
+    go test ./... -race -cover

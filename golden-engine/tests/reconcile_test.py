@@ -74,11 +74,15 @@ def test_retired_file_is_deleted(tmp_path):
     assert not (root / "old.yml").exists()
 
 
-def test_unmanaged_file_is_never_touched(tmp_path):
+# reconcile.py never reads plan["unmanaged"] — plan.nix drops those paths before
+# the plan is written. So this covers the reconcile half only: a rendered file the
+# plan does not classify is not copied out. The unmanaged classification itself is
+# covered by testUnmanagedPathLeavesManagedList and golden-base's render-customized.
+def test_unclassified_file_is_not_written(tmp_path):
     root = tmp_path / "root"
     root.mkdir()
     (root / "Dockerfile").write_text("mine\n")
-    run(tmp_path, base_plan(unmanaged=["Dockerfile"]), {"Dockerfile": "generated\n"})
+    run(tmp_path, base_plan(), {"Dockerfile": "generated\n"})
     assert (root / "Dockerfile").read_text() == "mine\n"
 
 

@@ -30,6 +30,20 @@
             '');
           };
 
+          # Also a check, not only an app: the eval units are the whole proof
+          # that the engine's guards fire, so `nix flake check` has to run them.
+          checks.eval-units = pkgs.runCommand "eval-units"
+            { nativeBuildInputs = [ pkgs.nix-unit ]; }
+            ''
+              nix-unit ${evalUnits}
+              touch $out
+            '';
+
+          # Building these is how you refresh the snapshots after a template
+          # change: `nix build .#files-default` and diff against tests/expected.
+          packages.files-default = (golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix)).filesDrv;
+          packages.files-customized = (golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo-customized.nix)).filesDrv;
+
           checks.render-snapshot =
             let
               golden = golden-engine.lib.mkGolden { packs = [ self.pack ]; } pkgs (import ./tests/fixtures/repo.nix);

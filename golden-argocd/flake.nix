@@ -37,6 +37,13 @@
           packages.files = golden.filesDrv;
 
           checks.render-svc = pkgs.runCommand "render-svc" { } ''
+            # The loop only visits files the expected tree already has, so an
+            # emptied expected tree would pass silently. The count is the guard.
+            found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
+            if [ "$found" -ne 6 ]; then
+              echo "expected tree holds $found files, not 6" >&2
+              exit 1
+            fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
               diff -u "${./tests/expected/svc}/$f" "${golden.filesDrv}/$f"
             done

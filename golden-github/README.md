@@ -11,14 +11,14 @@ other repo.
 | `CODEOWNERS` | managed | `* <owners>`, from `codeowners` |
 | `renovate.json` | managed | extends the hub's shared preset |
 | `.github/workflows/generate.yml` | managed | regenerates on PRs touching `flake.nix`, `flake.lock` or `repo.nix`; commits back only on Renovate's PRs |
+| `.github/workflows/ci.yml` | managed | one job per entry in `ci.jobs`; not emitted at all when no pack contributed one |
 
 ## Schema
 
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
 | `codeowners` | list | yes | — |
-| `ci.security` | bool | no | `true` |
-| `ci.release` | bool | no | `false` |
+| `ci.jobs` | list | no | `[ ]` |
 | `ci.extraSteps.pre` | list | no | `[ ]` |
 | `ci.extraSteps.post` | list | no | `[ ]` |
 

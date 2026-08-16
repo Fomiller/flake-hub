@@ -13,7 +13,7 @@ generate:
     nix run .#generate
 
 build:
-    just _lang-build
+    cargo build --release
 
 test:
-    just _lang-test
+    cargo test --all-features

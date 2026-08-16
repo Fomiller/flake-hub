@@ -15,8 +15,6 @@ golden-github.url = "github:Fomiller/flake-hub?dir=golden-github&ref=refs/tags/g
 | `ci.extraSteps.post` | list | no |
 | `ci.extraSteps.pre` | list | no |
 | `ci.jobs` | list | no |
-| `ci.release` | bool | no |
-| `ci.security` | bool | no |
 | `codeowners` | list | yes |
 
 ## Files

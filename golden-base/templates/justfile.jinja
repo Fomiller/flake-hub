@@ -1,4 +1,4 @@
-{% include "_header.jinja" %}
+{% include "_base_header.jinja" %}
 
 import? 'just/base.just'
 
@@ -11,5 +11,11 @@ generate:
     nix run .#generate
 {% for recipe in just.recipes %}
 
-{{ recipe }}
+{# A recipe is either literal text, or an attrset naming a command in the
+   language registry. Pack defaults are static data and cannot look anything
+   up, so the resolution has to happen here, where `language` is in scope. #}
+{% if recipe is mapping %}{{ recipe.name }}:
+    {{ languages[language][recipe.cmdFrom] }}
+{% else %}{{ recipe }}
+{% endif %}
 {% endfor %}
