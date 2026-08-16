@@ -21,6 +21,17 @@ and ships it as a container.
 `service.binary` has no pack default because it falls back to the repo's own
 name, which a pack cannot see. The template resolves it.
 
+## Source layout
+
+Language code lives under `src/`. Go puts its main package at
+`src/cmd/<binary>/`, with `go.mod` staying at the repo root so `setup-go` and
+`go mod download` still find it. Rust needs nothing special — `src/` is already
+where Cargo looks.
+
+The Go build writes to `bin/`, not the repo root, so a plain `just build` does
+not leave an untracked executable behind. Both `bin/` and `target/` come from
+this pack's `gitignore` entries.
+
 ## The language registry
 
 `registry.nix` maps each language to its build image, runtime image, setup step

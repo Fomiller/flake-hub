@@ -28,6 +28,14 @@ golden-service.url = "github:Fomiller/flake-hub?dir=golden-service&ref=refs/tags
 
 ## Notes
 
+Language code goes under `src/`. Go's main package is `src/cmd/<binary>/`, and
+`go.mod` stays at the repo root so `setup-go` and `go mod download` still find
+it. Rust already uses `src/`, so nothing changes there.
+
+Go builds land in `bin/` rather than the repo root. This pack adds `bin/` and
+`target/` to `gitignore`, which is a list key and therefore additive across
+packs.
+
 `service.container = false` does not just skip the Dockerfile — it removes it.
 A managed path missing from the rendered tree is deleted, so flipping the flag
 on an existing repo deletes the file rather than leaving a stale one.

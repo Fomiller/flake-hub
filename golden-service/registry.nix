@@ -8,9 +8,11 @@
           with:
             go-version-file: go.mod
             cache: true'';
-      buildCmd = "go build ./...";
-      testCmd = "go test ./... -race -cover";
-      lintCmd = "go vet ./...";
+      # Go code lives under src/, and the binary goes to bin/ so a plain build
+      # does not drop an untracked executable at the repo root.
+      buildCmd = "go build -o bin/ ./src/...";
+      testCmd = "go test ./src/... -race -cover";
+      lintCmd = "go vet ./src/...";
     };
     rust = {
       buildImage = "rust:1.82";

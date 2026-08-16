@@ -13,6 +13,7 @@ golden-base.url = "github:Fomiller/flake-hub?dir=golden-base&ref=refs/tags/golde
 | Key | Type | Required |
 |---|---|---|
 | `description` | string | no |
+| `gitignore` | list | no |
 | `just.recipes` | list | no |
 | `name` | string | yes |
 | `unmanaged` | list | no |
