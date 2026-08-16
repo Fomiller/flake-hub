@@ -58,7 +58,7 @@
               helm template test ./chart > rendered.yaml
               helm lint ./chart
               grep -q 'containerPort: 8080' rendered.yaml
-              grep -q 'name: test-svc-go' rendered.yaml
+              grep -q 'name: test-svc-go-chart' rendered.yaml
 
               # The chart is svc-go-chart, but no resource should say so. The
               # suffix names the artifact, not the workload. Helm's own
