@@ -16,6 +16,35 @@
 - Every pack change bumps that pack's `VERSION`. `version-bump-check.yaml` enforces it.
 - Engine changes bump `golden-engine/VERSION` and need a nix-unit case that goes red when the change is reverted.
 - Commit messages: conventional prefix, scope `FOM-51`, `Co-Authored-By: Claude` trailer.
+- Read `docs/superpowers/notes/helm-chart-repo-findings.md` before Tasks 2, 4 and 5. It records
+  what a hand-built chart repo already got wrong, and this plan is meant to lift from it rather
+  than rediscover it.
+- Packs do not share partial names. Each pack ships its own header partial named after itself
+  (`_service_header.jinja`, `_infra_header.jinja`, `_argocd_header.jinja`). The engine searches
+  every pack's partials directory and takes the first match, so a shared name means one pack
+  stamping another pack's files with the wrong pack name. The engine rejects two packs shipping
+  the same partial path.
+- A pack marks a generated file executable with the `executable` glob list in `pack.nix`,
+  beside `ownership`. Anything matched lands `0755`. This already exists — see
+  `golden-engine/README.md`.
+
+---
+
+## Rework log
+
+Amended 2026-08-16, before execution.
+
+1. **Every pack shipped `_header.jinja`.** Three packs in this plan each created a partial by
+   that name, and `golden-base` already ships one. The engine's partial-collision guard throws
+   on the second, and `overrides` would only silence the guard while leaving each pack's files
+   stamped with whichever pack won the search. Renamed per pack, as `golden-github` already
+   does.
+2. **The executable bit is done.** This plan originally had to build it before shipping
+   `next-version.sh`. It landed in `43a31a8`, so Tasks 2 and 4 use the `executable` field
+   directly. Nothing here builds it.
+3. **`helm-ecr.yaml` pins helm.** The findings note records that helm 4.2.4 emits a blank line
+   before `---` where 4.2.3 does not, which breaks snapshot tests on a patch bump. A workflow
+   using whatever helm the runner ships is a snapshot break waiting for a runner-image update.
 
 ---
 
@@ -148,7 +177,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 - Create: `golden-service/flake.nix`
 - Create: `golden-service/pack.nix`
 - Create: `golden-service/registry.nix`
-- Create: `golden-service/partials/_header.jinja`
+- Create: `golden-service/partials/_service_header.jinja`
 - Create: `golden-service/templates/Dockerfile.jinja`
 - Create: `golden-service/tests/fixtures/go.nix`
 - Create: `golden-service/tests/fixtures/rust.nix`
@@ -271,7 +300,7 @@ Expected: FAIL — `pack.nix does not exist`.
 `golden-service/templates/Dockerfile.jinja`:
 
 ```jinja
-{% if service.container %}{% include "_header.jinja" %}
+{% if service.container %}{% include "_service_header.jinja" %}
 
 {% if language == "go" %}
 FROM {{ languages[language].buildImage }} AS build
@@ -410,7 +439,7 @@ Expected: FAIL — `.github/workflows/ci.yml` missing from the rendered tree.
 - [ ] **Step 3: Write the ci.yml template in golden-github**
 
 ```jinja
-{% include "_header.jinja" %}
+{% include "_service_header.jinja" %}
 
 name: CI
 
@@ -523,7 +552,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 **Files:**
 - Create: `golden-infra/{flake.nix,pack.nix,registry.nix,VERSION}`
-- Create: `golden-infra/partials/_header.jinja`
+- Create: `golden-infra/partials/_infra_header.jinja`
 - Create: `golden-infra/templates/root.hcl.jinja`
 - Create: `golden-infra/templates/.github/workflows/deploy-infra.yml.jinja`
 - Create: `golden-infra/templates/infra/live/{dev,staging,prod}/README.md.jinja`
@@ -624,7 +653,7 @@ Expected: FAIL — pack does not exist.
 `golden-infra/templates/.github/workflows/deploy-infra.yml.jinja`:
 
 ```jinja
-{% include "_header.jinja" %}
+{% include "_infra_header.jinja" %}
 
 name: Terragrunt Deploy - Infra
 
@@ -760,6 +789,11 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 **Interfaces:**
 - Inputs: `chart-path` (string, default `deploy/chart`), `repo-prefix` (string, required), `aws-region` (string, default `us-east-1`), `role-to-assume` (string, required), `version` (string, required). Publishes `oci://<account>.dkr.ecr.<region>.amazonaws.com/<repo-prefix>`.
 
+`repo-prefix` is the prefix alone, never the full path. `helm push` appends the chart's own
+name to whatever path it is given, so the ECR repo must be `<prefix>/<chart-name>` and the
+push target must stop at the prefix. Getting this wrong does not error — it silently creates
+a second repo.
+
 - [ ] **Step 1: Read the existing ECR workflow**
 
 Read `~/dev/personal/gh-actions/.github/workflows/ecr.yaml` and match its input names and OIDC pattern rather than inventing a second convention in the same repo.
@@ -814,6 +848,13 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
 
+      # Pinned on purpose. helm 4.2.4 emits a blank line before `---` where
+      # 4.2.3 does not, so an unpinned helm breaks consumers' snapshot tests
+      # whenever the runner image moves.
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
       - name: Lint the chart
         run: helm lint "${{ inputs.chart-path }}"
 
@@ -857,7 +898,7 @@ Pull requests package and lint but do not push."
 
 **Files:**
 - Create: `golden-argocd/{flake.nix,pack.nix,VERSION}`
-- Create: `golden-argocd/partials/_header.jinja`
+- Create: `golden-argocd/partials/_argocd_header.jinja`
 - Create: `golden-argocd/templates/deploy/chart/Chart.yaml.jinja`
 - Create: `golden-argocd/templates/deploy/chart/values.yaml.jinja`
 - Create: `golden-argocd/templates/deploy/chart/templates/{deployment,service,_helpers.tpl}.jinja`
@@ -927,7 +968,7 @@ This is fiddly and worth one comment in the file explaining why: Helm and Jinja 
 - [ ] **Step 4: Write the publish workflow template**
 
 ```jinja
-{% include "_header.jinja" %}
+{% include "_argocd_header.jinja" %}
 
 name: Publish chart
 
