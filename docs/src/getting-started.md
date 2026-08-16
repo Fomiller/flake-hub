@@ -21,6 +21,9 @@ to `repo.nix` before the first run:
 language = "go";
 ```
 
+Language code goes under `src/`, with Go's main package at
+`src/cmd/<name>/`. `go.mod` stays at the repo root.
+
 Then generate:
 
 ```sh

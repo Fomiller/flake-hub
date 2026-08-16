@@ -3,6 +3,7 @@
 [Introduction](introduction.md)
 
 - [Getting started](getting-started.md)
+- [Examples](examples.md)
 
 # Flakes
 
