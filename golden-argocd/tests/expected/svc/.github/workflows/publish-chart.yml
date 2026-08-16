@@ -1,0 +1,26 @@
+# GENERATED FILE — managed by flake-hub (golden-argocd).
+# Do not edit manually: `nix run .#generate` overwrites it.
+# To change it, edit repo.nix, or the template in the pack that owns it.
+
+name: Publish chart
+
+on:
+  pull_request:
+    paths: [deploy/chart/**]
+  push:
+    branches: [main]
+    paths: [deploy/chart/**]
+
+jobs:
+  chart:
+    uses: Fomiller/gh-actions/.github/workflows/helm-ecr.yaml@main
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      chart-path: deploy/chart
+      repo-prefix: charts
+      role-to-assume: arn:aws:iam::000000000000:role/github-actions
+      version: 0.1.0
+      push: ${{ github.event_name == 'push' }}
+    secrets: inherit

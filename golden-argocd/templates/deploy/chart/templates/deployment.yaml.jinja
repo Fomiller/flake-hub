@@ -1,0 +1,22 @@
+{# Helm and Jinja share {{ }}. Everything Helm must see verbatim stays inside
+   raw; only the build-time values step outside it. #}
+{% raw %}{{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chart.fullname" . }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {% endraw %}{{ service.port }}

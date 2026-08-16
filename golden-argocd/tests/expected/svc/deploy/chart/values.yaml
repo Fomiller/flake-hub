@@ -1,0 +1,7 @@
+# Written once, then it is yours. `nix run .#generate` never touches it again.
+
+replicas: 1
+
+image:
+  repository: charts/svc-go
+  tag: latest
