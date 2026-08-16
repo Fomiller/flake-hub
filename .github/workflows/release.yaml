@@ -1,0 +1,11 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    uses: Fomiller/gh-actions/.github/workflows/release-flake.yaml@main
+    with:
+      flake-dirs: '["golden-engine","golden-base","golden-github"]'

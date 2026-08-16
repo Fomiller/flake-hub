@@ -1,0 +1,32 @@
+# A pack whose files changed without a VERSION bump ships nothing: consumers
+# pin tags, so an untagged change is invisible to every repo downstream.
+name: version-bump-check
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Every changed flake directory must bump its VERSION
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for dir in golden-*/; do
+            dir=${dir%/}
+            changed=$(git diff --name-only "$BASE" "$HEAD" -- "$dir" | grep -v "^$dir/VERSION$" || true)
+            [ -n "$changed" ] || continue
+            if git diff --quiet "$BASE" "$HEAD" -- "$dir/VERSION"; then
+              echo "::error file=$dir/VERSION::$dir changed but VERSION did not"
+              failed=1
+            fi
+          done
+          exit $failed

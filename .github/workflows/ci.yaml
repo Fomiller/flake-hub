@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    uses: Fomiller/gh-actions/.github/workflows/nix-flake-check.yaml@main
+    with:
+      flake-dirs: '["golden-base","golden-github","renovate"]'
