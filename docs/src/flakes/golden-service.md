@@ -8,6 +8,22 @@ golden-service.url = "github:Fomiller/flake-hub?dir=golden-service&ref=refs/tags
 ```
 
 <!-- BEGIN GENERATED REFERENCE -->
+## repo.nix
+
+Every knob this pack adds. Required keys are filled in; optional ones are
+commented out beside the default they fall back to.
+
+```nix
+{
+  language = "go";  # required, enum: go | rust
+  service = {
+    # binary = "…";  # string, no default
+    # container = true;  # bool, default
+    # port = 8080;  # int, default
+  };
+}
+```
+
 ## Configuration
 
 | Key | Type | Required |
