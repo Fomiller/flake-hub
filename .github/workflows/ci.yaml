@@ -12,3 +12,11 @@ jobs:
     uses: Fomiller/gh-actions/.github/workflows/nix-flake-check.yaml@main
     with:
       flake-dirs: '["golden-base","golden-github","golden-service","golden-infra","golden-argocd","renovate","docs"]'
+
+  # The flake check builds the book too, but only under nix. This catches a
+  # page that builds locally and breaks with the mdbook the deploy uses.
+  docs-build:
+    uses: Fomiller/gh-actions/.github/workflows/mdbook.yaml@main
+    with:
+      book-path: docs
+      deploy: false
