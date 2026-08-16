@@ -1,5 +1,5 @@
 {
-  description = "golden-argocd: the chart a service ships and the workflow that publishes it";
+  description = "golden-argocd: the chart a service ships and the workflows that publish it";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -40,8 +40,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 11 ]; then
-              echo "expected tree holds $found files, not 11" >&2
+            if [ "$found" -ne 12 ]; then
+              echo "expected tree holds $found files, not 12" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
@@ -58,7 +58,7 @@
               helm template test ./chart > rendered.yaml
               helm lint ./chart
               grep -q 'containerPort: 8080' rendered.yaml
-              grep -q 'name: test-svc-go' rendered.yaml
+              grep -q 'name: test-svc-go-chart' rendered.yaml
 
               # The overlay base values set fullnameOverride. A helper that
               # ignores it makes that file a lie, and renders fine either way.
@@ -78,6 +78,29 @@
                 for f in $(yq -r '.helmCharts[].valuesFile, .helmCharts[].additionalValuesFiles[]' "$k"); do
                   if [ ! -e "$dir/$f" ]; then
                     echo "$k names $f, which does not exist" >&2
+                    exit 1
+                  fi
+                done
+              done
+              touch $out
+            '';
+
+          # The publish workflow takes the ECR repository name from Chart.yaml,
+          # and the overlay pulls that name back out of the registry. If the two
+          # drift, Argo CD asks for a chart nobody published.
+          checks.overlay-chart-name-matches = pkgs.runCommand "overlay-chart-name-matches"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              cd ${golden.filesDrv}
+              chart=$(yq -r '.name' helm/*/Chart.yaml)
+              case "$chart" in
+                *-chart) ;;
+                *) echo "chart is named '$chart'; it must end in -chart" >&2; exit 1 ;;
+              esac
+              for k in argocd/overlays/*/kustomization.yaml; do
+                for n in $(yq -r '.helmCharts[].name' "$k"); do
+                  if [ "$n" != "$chart" ]; then
+                    echo "$k asks for chart '$n' but the chart is named '$chart'" >&2
                     exit 1
                   fi
                 done

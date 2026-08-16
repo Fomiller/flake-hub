@@ -1,13 +1,15 @@
+# ---------------------------------------------------------------------------
 # GENERATED FILE — managed by flake-hub (golden-argocd).
 # Do not edit manually: `nix run .#generate` overwrites it.
 # To change it, edit repo.nix, or the template in the pack that owns it.
+# ---------------------------------------------------------------------------
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 helmCharts:
-  - name: svc-go
-    repo: oci://000000000000.dkr.ecr.us-east-1.amazonaws.com/charts
+  - name: svc-go-chart
+    repo: oci://000000000000.dkr.ecr.us-east-1.amazonaws.com
     version: 0.1.0
     releaseName: svc-go-prod
     namespace: svc-go

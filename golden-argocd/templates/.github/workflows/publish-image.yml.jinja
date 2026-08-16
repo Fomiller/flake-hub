@@ -1,0 +1,25 @@
+{% include "_argocd_header.jinja" %}
+
+name: Publish image
+
+on:
+  pull_request:
+    paths: [src/**, Dockerfile]
+  push:
+    branches: [main]
+    paths: [src/**, Dockerfile]
+
+jobs:
+  image:
+    uses: Fomiller/gh-actions/.github/workflows/docker-ecr.yaml@main
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      repository: {{ name }}
+      role-to-assume: {{ deploy.roleToAssume }}
+      aws-region: {{ deploy.awsRegion }}
+      platforms: {{ deploy.platforms | join(",") }}
+      # A pull request builds the image and throws it away. Only main pushes.
+      push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
+    secrets: inherit

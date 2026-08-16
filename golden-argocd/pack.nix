@@ -7,6 +7,8 @@
       envs = [ "dev" ];
       replicas = 1;
       chartVersion = "0.1.0";
+      awsRegion = "us-east-1";
+      platforms = [ "linux/amd64" ];
     };
   };
   registry = { };
@@ -18,6 +20,7 @@
       "helm/*/templates/*"
       "argocd/overlays/*/kustomization.yaml"
       ".github/workflows/publish-chart.yml"
+      ".github/workflows/publish-image.yml"
     ];
     # The chart's values and the overlay values are the service's own
     # configuration surface, so they are written once and then left alone.
@@ -45,10 +48,11 @@
     # rather than at render time.
     "service.port" = { type = "int"; required = true; };
     "deploy.registry" = { type = "string"; required = true; };
-    "deploy.ecrRepo" = { type = "string"; required = true; };
     "deploy.roleToAssume" = { type = "string"; required = true; };
+    "deploy.awsRegion" = { type = "string"; };
     "deploy.envs" = { type = "list"; };
     "deploy.replicas" = { type = "int"; };
     "deploy.chartVersion" = { type = "string"; };
+    "deploy.platforms" = { type = "list"; };
   };
 }

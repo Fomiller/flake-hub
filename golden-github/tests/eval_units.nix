@@ -6,7 +6,7 @@ let
 in
 {
   testCodeownersIsOwnedByThisPack = {
-    expr = merged.owners."CODEOWNERS";
+    expr = merged.owners.".github/CODEOWNERS";
     expected = "golden-github";
   };
 

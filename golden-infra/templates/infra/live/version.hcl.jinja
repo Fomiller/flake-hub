@@ -1,0 +1,6 @@
+{% include "_infra_header.jinja" %}
+
+locals {
+  terraform_version    = "{{ infra.terraformVersion }}"
+  aws_provider_version = "{{ infra.awsProviderVersion }}"
+}

@@ -42,14 +42,14 @@
           packages.files-dev-only = (render ./tests/fixtures/dev-only.nix).filesDrv;
           packages.files-all-envs = (render ./tests/fixtures/all-envs.nix).filesDrv;
 
-          checks.render-dev-only = snapshot "dev-only" 6 ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
-          checks.render-all-envs = snapshot "all-envs" 10 ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
+          checks.render-dev-only = snapshot "dev-only" 9 ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
+          checks.render-all-envs = snapshot "all-envs" 15 ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
 
           # Each environment is a separate gated template, so a repo that does
           # not select an environment must not get its directory at all.
           checks.unselected-envs-are-absent = pkgs.runCommand "unselected-envs-are-absent" { } ''
             for env in staging prod; do
-              for f in account.hcl README.md; do
+              for f in account.hcl README.md terragrunt.stack.hcl; do
                 if [ -e ${(render ./tests/fixtures/dev-only.nix).filesDrv}/infra/live/$env/$f ]; then
                   echo "infra.envs excludes $env but infra/live/$env/$f was rendered" >&2
                   exit 1
@@ -61,7 +61,7 @@
 
           # {{env}} is just syntax that has to survive Jinja untouched.
           checks.just-recipes-keep-their-braces = pkgs.runCommand "just-recipes-keep-their-braces" { } ''
-            grep -q 'cd infra/live/{{env}} && terragrunt run-all plan' ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile
+            grep -q 'cd infra/live/{{env}} && terragrunt stack run plan' ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile
             touch $out
           '';
 

@@ -1,5 +1,7 @@
 {% include "_infra_header.jinja" %}
 
 locals {
-  repo_name = "{{ name }}"
+  repo_name  = "{{ name }}"
+  app_prefix = "{{ name }}"
+  namespace  = "{{ infra.namespace }}"
 }

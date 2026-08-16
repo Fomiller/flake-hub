@@ -80,7 +80,7 @@
           # the partial under one name this would render the wrong pack name.
           checks.each-pack-stamps-its-own-header = pkgs.runCommand "each-pack-stamps-its-own-header" { } ''
             grep -q 'managed by flake-hub (golden-base)' ${golden.filesDrv}/.gitignore
-            grep -q 'managed by flake-hub (golden-github)' ${golden.filesDrv}/CODEOWNERS
+            grep -q 'managed by flake-hub (golden-github)' ${golden.filesDrv}/.github/CODEOWNERS
             touch $out
           '';
 
@@ -112,7 +112,7 @@
           # A rule with a pattern and no owners means "no review required for
           # anything" — the opposite of what this pack is for. Emit no rule.
           checks.empty-codeowners-emits-no-rule = pkgs.runCommand "empty-codeowners-emits-no-rule" { } ''
-            if grep -q '^\*' ${emptyOwners.filesDrv}/CODEOWNERS; then
+            if grep -q '^\*' ${emptyOwners.filesDrv}/.github/CODEOWNERS; then
               echo "codeowners is empty but CODEOWNERS still carries a rule" >&2
               exit 1
             fi
