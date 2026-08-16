@@ -8,6 +8,25 @@ golden-argocd.url = "github:Fomiller/flake-hub?dir=golden-argocd&ref=refs/tags/g
 ```
 
 <!-- BEGIN GENERATED REFERENCE -->
+## repo.nix
+
+Every knob this pack adds. Required keys are filled in; optional ones are
+commented out beside the default they fall back to.
+
+```nix
+{
+  deploy = {
+    ecrRepo = "…";  # required, string
+    roleToAssume = "…";  # required, string
+    # chartVersion = "0.1.0";  # string, default
+    # replicas = 1;  # int, default
+  };
+  service = {
+    port = 0;  # required, int
+  };
+}
+```
+
 ## Configuration
 
 | Key | Type | Required |

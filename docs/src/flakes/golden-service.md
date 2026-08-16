@@ -8,6 +8,22 @@ golden-service.url = "github:Fomiller/flake-hub?dir=golden-service&ref=refs/tags
 ```
 
 <!-- BEGIN GENERATED REFERENCE -->
+## repo.nix
+
+Every knob this pack adds. Required keys are filled in; optional ones are
+commented out beside the default they fall back to.
+
+```nix
+{
+  language = "go";  # required, enum: go | rust
+  service = {
+    # binary = "…";  # string, no default
+    # container = true;  # bool, default
+    # port = 8080;  # int, default
+  };
+}
+```
+
 ## Configuration
 
 | Key | Type | Required |
@@ -27,6 +43,14 @@ golden-service.url = "github:Fomiller/flake-hub?dir=golden-service&ref=refs/tags
 <!-- END GENERATED REFERENCE -->
 
 ## Notes
+
+Language code goes under `src/`. Go's main package is `src/cmd/<binary>/`, and
+`go.mod` stays at the repo root so `setup-go` and `go mod download` still find
+it. Rust already uses `src/`, so nothing changes there.
+
+Go builds land in `bin/` rather than the repo root. This pack adds `bin/` and
+`target/` to `gitignore`, which is a list key and therefore additive across
+packs.
 
 `service.container = false` does not just skip the Dockerfile — it removes it.
 A managed path missing from the rendered tree is deleted, so flipping the flag

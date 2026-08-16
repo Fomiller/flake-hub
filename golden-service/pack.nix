@@ -10,6 +10,9 @@
     # `stepsFrom` is opaque to golden-github, which owns ci.yml. The lookup
     # happens in the template, where `language` and the registry are in scope.
     ci.jobs = [{ name = "build-test"; stepsFrom = "language"; }];
+    # Build output for both languages. Defaults are static data and cannot
+    # branch on `language`, and an unused line costs nothing.
+    gitignore = [ "bin/" "target/" ];
     just.recipes = [
       { name = "build"; cmdFrom = "buildCmd"; }
       { name = "test"; cmdFrom = "testCmd"; }

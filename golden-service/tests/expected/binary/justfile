@@ -13,7 +13,7 @@ generate:
     nix run .#generate
 
 build:
-    go build ./...
+    go build -o bin/ ./src/...
 
 test:
-    go test ./... -race -cover
+    go test ./src/... -race -cover

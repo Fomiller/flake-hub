@@ -22,8 +22,13 @@ itself, see `golden-engine/README.md`.
 | --------------- | ------ | -------- | ------------------------------------- |
 | `name`          | string | yes      | Repo name. Used in the generated `README.md` and elsewhere. |
 | `description`   | string | no       | Shown in the generated `README.md` if set. |
+| `gitignore`     | list   | no       | Lines written to `.gitignore`, one per entry. |
 | `just.recipes`  | list   | no       | Extra recipes rendered into `justfile`. |
 | `unmanaged`     | list   | no       | Generated paths to leave alone. See `golden-engine/README.md` for what "unmanaged" means. |
+
+List keys are additive across packs, so a pack adds its own build output to
+`gitignore` instead of shipping a competing `.gitignore`. `repo.nix` is not
+additive: setting `gitignore` there replaces the whole list.
 
 ## Setting up a new repo
 

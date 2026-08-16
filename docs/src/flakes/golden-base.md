@@ -8,11 +8,29 @@ golden-base.url = "github:Fomiller/flake-hub?dir=golden-base&ref=refs/tags/golde
 ```
 
 <!-- BEGIN GENERATED REFERENCE -->
+## repo.nix
+
+Every knob this pack adds. Required keys are filled in; optional ones are
+commented out beside the default they fall back to.
+
+```nix
+{
+  name = "…";  # required, string
+  # description = "";  # string, default
+  # gitignore = [ "result" "result-*" ".direnv/" ".DS_Store" ];  # list, default
+  just = {
+    # recipes = [ ];  # list, default
+  };
+  # unmanaged = [ ];  # list, default
+}
+```
+
 ## Configuration
 
 | Key | Type | Required |
 |---|---|---|
 | `description` | string | no |
+| `gitignore` | list | no |
 | `just.recipes` | list | no |
 | `name` | string | yes |
 | `unmanaged` | list | no |

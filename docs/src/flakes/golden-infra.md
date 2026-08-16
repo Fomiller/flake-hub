@@ -8,6 +8,25 @@ golden-infra.url = "github:Fomiller/flake-hub?dir=golden-infra&ref=refs/tags/gol
 ```
 
 <!-- BEGIN GENERATED REFERENCE -->
+## repo.nix
+
+Every knob this pack adds. Required keys are filled in; optional ones are
+commented out beside the default they fall back to.
+
+```nix
+{
+  infra = {
+    dopplerProject = "…";  # required, string
+    stateBucket = "…";  # required, string
+    # awsProviderVersion = ">=5.0.0";  # string, default
+    # awsRegion = "us-east-1";  # string, default
+    # envs = [ "dev" ];  # list, default
+    # tailscale = true;  # bool, default
+    # terraformVersion = ">=1.11.0";  # string, default
+  };
+}
+```
+
 ## Configuration
 
 | Key | Type | Required |

@@ -47,8 +47,11 @@
           packages.files-binary = (render ./tests/fixtures/binary.nix).filesDrv;
           packages.files-library = (render ./tests/fixtures/library.nix).filesDrv;
 
-          checks.render-go = snapshot "go" 3 ./tests/expected/go ./tests/fixtures/go.nix;
-          checks.render-rust = snapshot "rust" 3 ./tests/expected/rust ./tests/fixtures/rust.nix;
+          # .gitignore belongs to golden-base, but it is snapshotted here too:
+          # this pack appends its build output to it, and nowhere else proves
+          # that two packs' entries both survive the merge.
+          checks.render-go = snapshot "go" 4 ./tests/expected/go ./tests/fixtures/go.nix;
+          checks.render-rust = snapshot "rust" 4 ./tests/expected/rust ./tests/fixtures/rust.nix;
 
           # service.binary has no pack default: it falls back to the repo name,
           # which packs cannot see. This covers the case where it is set.

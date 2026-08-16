@@ -50,6 +50,11 @@
           checks.eval-units = pkgs.runCommand "eval-units"
             { nativeBuildInputs = [ pkgs.nix-unit ]; }
             ''
+              # nix-unit starts an evaluator, which wants somewhere to put a
+              # profile and a cache. Inside the sandbox /nix/var is read-only.
+              export HOME=$TMPDIR
+              export NIX_STATE_DIR=$TMPDIR/nix/var/nix
+              export XDG_CACHE_HOME=$TMPDIR/cache
               nix-unit ${evalUnits}
               touch $out
             '';

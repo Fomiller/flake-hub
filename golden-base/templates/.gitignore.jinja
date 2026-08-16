@@ -1,6 +1,5 @@
 {% include "_base_header.jinja" %}
 
-result
-result-*
-.direnv/
-.DS_Store
+{% for entry in gitignore %}
+{{ entry }}
+{% endfor %}

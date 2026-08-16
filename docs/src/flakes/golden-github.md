@@ -8,6 +8,24 @@ golden-github.url = "github:Fomiller/flake-hub?dir=golden-github&ref=refs/tags/g
 ```
 
 <!-- BEGIN GENERATED REFERENCE -->
+## repo.nix
+
+Every knob this pack adds. Required keys are filled in; optional ones are
+commented out beside the default they fall back to.
+
+```nix
+{
+  codeowners = [ ];  # required, list
+  ci = {
+    extraSteps = {
+      # post = [ ];  # list, default
+      # pre = [ ];  # list, default
+    };
+    # jobs = [ ];  # list, default
+  };
+}
+```
+
 ## Configuration
 
 | Key | Type | Required |

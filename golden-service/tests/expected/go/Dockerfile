@@ -7,7 +7,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /out/svc-go ./cmd/svc-go
+RUN CGO_ENABLED=0 go build -o /out/svc-go ./src/cmd/svc-go
 
 FROM gcr.io/distroless/static-debian12
 COPY --from=build /out/svc-go /svc-go
