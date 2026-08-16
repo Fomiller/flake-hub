@@ -1,0 +1,39 @@
+{% if ci.jobs %}{% include "_github_header.jinja" %}
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: {% raw %}${{ github.workflow }}-${{ github.ref }}{% endraw +%}
+  cancel-in-progress: true
+
+jobs:
+{% for job in ci.jobs %}
+  {{ job.name }}:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+{% for step in ci.extraSteps.pre %}
+{{ step | indent(6, true) }}
+{% endfor %}
+{% if job.stepsFrom == "language" %}
+{{ languages[language].setupStep | indent(6, true) }}
+      - name: build
+        run: {{ languages[language].buildCmd }}
+      - name: test
+        run: {{ languages[language].testCmd }}
+      - name: lint
+        run: {{ languages[language].lintCmd }}
+{% endif %}
+{% for step in job.steps | default([], true) %}
+{{ step | indent(6, true) }}
+{% endfor %}
+{% for step in ci.extraSteps.post %}
+{{ step | indent(6, true) }}
+{% endfor %}
+{% endfor %}
+{% endif %}

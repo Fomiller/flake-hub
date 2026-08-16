@@ -47,6 +47,17 @@
             touch $out
           '';
 
+          # `jobs:` with no children is invalid YAML, so a repo that contributes
+          # no jobs gets no ci.yml at all. The fixture selects no service pack,
+          # so ci.jobs is empty here.
+          checks.no-jobs-means-no-ci-workflow = pkgs.runCommand "no-jobs-means-no-ci-workflow" { } ''
+            if [ -e ${golden.filesDrv}/.github/workflows/ci.yml ]; then
+              echo "ci.jobs is empty but ci.yml was still rendered" >&2
+              exit 1
+            fi
+            touch $out
+          '';
+
           checks.rendered-workflows-lint = pkgs.runCommand "rendered-workflows-lint"
             { nativeBuildInputs = [ pkgs.actionlint ]; }
             ''

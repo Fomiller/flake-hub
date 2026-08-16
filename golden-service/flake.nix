@@ -40,6 +40,23 @@
           # which packs cannot see. This covers the case where it is set.
           checks.render-named-binary = snapshot "named-binary" ./tests/expected/binary ./tests/fixtures/binary.nix;
 
+          # A library still builds, tests and lints. Only the Dockerfile is gated.
+          checks.render-library = snapshot "library" ./tests/expected/library ./tests/fixtures/library.nix;
+
+          # golden-github's own lint check never sees ci.yml, because a repo with
+          # no service pack contributes no jobs and gets no workflow.
+          checks.rendered-ci-lint = pkgs.runCommand "rendered-ci-lint"
+            { nativeBuildInputs = [ pkgs.actionlint ]; }
+            ''
+              mkdir -p repo && cd repo
+              cp -r ${(render ./tests/fixtures/go.nix).filesDrv}/.github .
+              chmod -R +w .github
+              # Bare `actionlint` walks up looking for a git repo. There isn't
+              # one in a build sandbox, so name the files.
+              actionlint .github/workflows/*.yml
+              touch $out
+            '';
+
           checks.library-has-no-dockerfile =
             pkgs.runCommand "library-has-no-dockerfile" { } ''
               if [ -e ${(render ./tests/fixtures/library.nix).filesDrv}/Dockerfile ]; then

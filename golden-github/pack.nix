@@ -6,12 +6,13 @@
     ci = {
       security = true;
       release = false;
+      jobs = [ ];
       extraSteps = { pre = [ ]; post = [ ]; };
     };
   };
   registry = { };
   ownership = {
-    managed = [ "CODEOWNERS" "renovate.json" ".github/workflows/generate.yml" ];
+    managed = [ "CODEOWNERS" "renovate.json" ".github/workflows/generate.yml" ".github/workflows/ci.yml" ];
     scaffold = [ ];
     retired = [ ];
   };
@@ -20,6 +21,7 @@
   schema = {
     "codeowners" = { type = "list"; required = true; };
     "ci.security" = { type = "bool"; };
+    "ci.jobs" = { type = "list"; };
     "ci.release" = { type = "bool"; };
     "ci.extraSteps.pre" = { type = "list"; };
     "ci.extraSteps.post" = { type = "list"; };

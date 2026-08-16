@@ -439,7 +439,7 @@ Expected: FAIL — `.github/workflows/ci.yml` missing from the rendered tree.
 - [ ] **Step 3: Write the ci.yml template in golden-github**
 
 ```jinja
-{% include "_service_header.jinja" %}
+{% include "_github_header.jinja" %}
 
 name: CI
 
