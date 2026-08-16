@@ -67,6 +67,23 @@ Build it in plan 3, before `golden-service` ships. Work involved:
 Retrofitting after packs are tagged means a coordinated re-release across every
 pack, so do it while nothing is tagged.
 
+Design settled while reading the code, so the implementer does not re-derive it:
+
+- `executable` is a top-level pack field, a sibling of `ownership`, not a fourth
+  ownership class. A file is managed *and* executable; the two are independent.
+  `merge.nix` unions it into `merged.executable`.
+- Declare it on every pack and read it directly (`pack.executable`), the way
+  `overrides` and `ownership` are read. Not `pack.executable or [ ]` — a
+  fallback turns a misspelled field name into silence. The eval-unit fixtures
+  that build packs by hand need the field added.
+- `plan.nix` resolves the globs against `live` with the existing `matches`, and
+  a glob matching no emitted path is an error, same as a stale `unmanaged`
+  entry. Both mean a typo nobody would otherwise notice.
+- `reconcile.py` must chmod even when the bytes already match. Today `write()`
+  returns early on identical content, so a file whose mode is wrong but whose
+  content is right would never be corrected, and the drift check would call the
+  repo clean. Mode has to count as a change on its own.
+
 ## Terraform ECR unit — take it as-is
 
 `infra/units/aws/global/ecr` plus the four `infra/live/*.hcl` files. About 50

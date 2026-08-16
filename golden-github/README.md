@@ -10,6 +10,7 @@ other repo.
 | --- | --- | --- |
 | `CODEOWNERS` | managed | `* <owners>`, from `codeowners` |
 | `renovate.json` | managed | extends the hub's shared preset |
+| `.github/workflows/generate.yml` | managed | regenerates on PRs touching `flake.nix`, `flake.lock` or `repo.nix`; commits back only on Renovate's PRs |
 
 ## Schema
 
