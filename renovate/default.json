@@ -1,0 +1,20 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Bumps flake-hub pack pins. Each pack is tagged <pack>-<semver> on one repo, so the version match must be anchored per pack.",
+  "nix": {
+    "enabled": false
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)flake\\.nix$/"],
+      "matchStrings": [
+        "(?<depName>golden-[a-z0-9-]+)\\.url\\s*=\\s*\"github:Fomiller/flake-hub\\?dir=\\k<depName>&ref=refs/tags/(?<currentValue>\\k<depName>-[0-9]+\\.[0-9]+\\.[0-9]+)\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "Fomiller/flake-hub",
+      "extractVersionTemplate": "^{{{depName}}}-(?<version>.+)$",
+      "versioningTemplate": "semver"
+    }
+  ]
+}

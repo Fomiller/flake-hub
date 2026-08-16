@@ -11,7 +11,7 @@
   };
   registry = { };
   ownership = {
-    managed = [ "CODEOWNERS" ];
+    managed = [ "CODEOWNERS" "renovate.json" ];
     scaffold = [ ];
     retired = [ ];
   };
