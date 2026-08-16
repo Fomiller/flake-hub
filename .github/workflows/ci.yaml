@@ -17,6 +17,12 @@ jobs:
   # page that builds locally and breaks with the mdbook the deploy uses.
   docs-build:
     uses: Fomiller/gh-actions/.github/workflows/mdbook.yaml@main
+    # Nothing is published with deploy: false, but the called job still
+    # declares these, and a caller cannot grant less than the callee asks for.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     with:
       book-path: docs
       deploy: false

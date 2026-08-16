@@ -10,5 +10,9 @@ on:
 jobs:
   release:
     uses: Fomiller/gh-actions/.github/workflows/release-flake.yaml@main
+    # The default token is read-only. A called workflow cannot grant itself
+    # more than its caller has, so without this the run fails before it starts.
+    permissions:
+      contents: write
     with:
       flake-dirs: '["golden-engine","golden-base","golden-github","golden-service","golden-infra","golden-argocd"]'
