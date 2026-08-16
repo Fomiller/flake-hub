@@ -58,7 +58,16 @@
               helm template test ./chart > rendered.yaml
               helm lint ./chart
               grep -q 'containerPort: 8080' rendered.yaml
-              grep -q 'name: test-svc-go-chart' rendered.yaml
+              grep -q 'name: test-svc-go' rendered.yaml
+
+              # The chart is svc-go-chart, but no resource should say so. The
+              # suffix names the artifact, not the workload. Helm's own
+              # `# Source:` comments carry the chart directory and are exempt.
+              if grep -v '^#' rendered.yaml | grep -q -- '-chart'; then
+                grep -v '^#' rendered.yaml | grep -n -- '-chart' >&2
+                echo "the chart's -chart suffix leaked into the rendered resources" >&2
+                exit 1
+              fi
 
               # The chart is svc-go-chart, but no resource should say so. The
               # suffix names the artifact, not the workload. Helm's own
