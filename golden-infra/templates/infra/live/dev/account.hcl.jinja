@@ -1,0 +1,7 @@
+{% if "dev" in infra.envs %}{% include "_infra_header.jinja" %}
+
+locals {
+  environment = "dev"
+  region      = "{{ infra.awsRegion }}"
+}
+{% endif %}

@@ -1,0 +1,54 @@
+{% include "_infra_header.jinja" %}
+
+name: Terragrunt Deploy - Infra
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/deploy-infra.yml
+      - infra/**
+      - justfile
+      - just/terraform.just
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-infra.yml
+      - infra/**
+      - justfile
+      - just/terraform.just
+
+jobs:
+{% for env in infra.envs %}
+  plan-{{ env }}:
+    name: Plan Infra ({{ env }})
+    if: {% raw %}${{ github.event_name == 'pull_request' }}{% endraw +%}
+    permissions:
+      id-token: write
+      contents: read
+    uses: Fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
+    with:
+      environment: {{ env }}
+      infra-dir: infra/live/{{ env }}
+      doppler-project: {{ infra.dopplerProject }}
+      tg-plan: true
+      use-oidc: true
+      use-tailscale: {{ infra.tailscale | lower }}
+      tailscale-tags: tag:ci
+    secrets: inherit
+
+  apply-{{ env }}:
+    name: Apply Infra ({{ env }})
+    if: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
+    permissions:
+      id-token: write
+      contents: read
+    uses: Fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
+    with:
+      environment: {{ env }}
+      infra-dir: infra/live/{{ env }}
+      doppler-project: {{ infra.dopplerProject }}
+      use-oidc: true
+      use-tailscale: {{ infra.tailscale | lower }}
+      tailscale-tags: tag:ci
+    secrets: inherit
+{% endfor %}

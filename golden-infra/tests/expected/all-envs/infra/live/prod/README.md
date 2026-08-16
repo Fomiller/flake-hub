@@ -1,0 +1,4 @@
+# infra/live/prod
+
+Terragrunt units for the prod environment. These are yours: the generator
+creates this directory, the root config and the deploy workflow, nothing else.
