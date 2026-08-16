@@ -54,20 +54,21 @@
           checks.chart-renders = pkgs.runCommand "chart-renders"
             { nativeBuildInputs = [ pkgs.kubernetes-helm ]; }
             ''
+              # A bare `grep -q` that fails says nothing at all, which turns a
+              # red check into a guessing game. Every assertion names itself.
+              assert_grep() {
+                if ! grep -q -- "$1" "$2"; then
+                  echo "expected '$1' in $2, and it is not there:" >&2
+                  cat "$2" >&2
+                  exit 1
+                fi
+              }
+
               cp -r ${golden.filesDrv}/helm/svc-go chart && chmod -R +w chart
               helm template test ./chart > rendered.yaml
               helm lint ./chart
-              grep -q 'containerPort: 8080' rendered.yaml
-              grep -q 'name: test-svc-go' rendered.yaml
-
-              # The chart is svc-go-chart, but no resource should say so. The
-              # suffix names the artifact, not the workload. Helm's own
-              # `# Source:` comments carry the chart directory and are exempt.
-              if grep -v '^#' rendered.yaml | grep -q -- '-chart'; then
-                grep -v '^#' rendered.yaml | grep -n -- '-chart' >&2
-                echo "the chart's -chart suffix leaked into the rendered resources" >&2
-                exit 1
-              fi
+              assert_grep 'containerPort: 8080' rendered.yaml
+              assert_grep 'name: test-svc-go' rendered.yaml
 
               # The chart is svc-go-chart, but no resource should say so. The
               # suffix names the artifact, not the workload. Helm's own
@@ -81,7 +82,7 @@
               # The overlay base values set fullnameOverride. A helper that
               # ignores it makes that file a lie, and renders fine either way.
               helm template test ./chart --set fullnameOverride=pinned > override.yaml
-              grep -q 'name: pinned' override.yaml
+              assert_grep 'name: pinned' override.yaml
               touch $out
             '';
 
