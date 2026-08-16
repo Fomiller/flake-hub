@@ -11,7 +11,7 @@
   };
   registry = { };
   ownership = {
-    managed = [ "CODEOWNERS" "renovate.json" ];
+    managed = [ "CODEOWNERS" "renovate.json" ".github/workflows/generate.yml" ];
     scaffold = [ ];
     retired = [ ];
   };

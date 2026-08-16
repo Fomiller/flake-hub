@@ -47,6 +47,18 @@
             touch $out
           '';
 
+          checks.rendered-workflows-lint = pkgs.runCommand "rendered-workflows-lint"
+            { nativeBuildInputs = [ pkgs.actionlint ]; }
+            ''
+              mkdir -p repo && cd repo
+              cp -r ${golden.filesDrv}/.github .
+              chmod -R +w .github
+              # Bare `actionlint` walks up looking for a git repo. There isn't
+              # one in a build sandbox, so name the files.
+              actionlint .github/workflows/*.yml
+              touch $out
+            '';
+
           apps.test-eval = {
             type = "app";
             program = toString (pkgs.writeShellScript "test-eval" ''

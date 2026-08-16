@@ -1,0 +1,23 @@
+{% include "_github_header.jinja" %}
+
+name: Generate
+
+on:
+  pull_request:
+    paths:
+      - flake.nix
+      - flake.lock
+      - repo.nix
+
+concurrency:
+  group: {% raw %}${{ github.workflow }}-${{ github.ref }}{% endraw +%}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    uses: Fomiller/gh-actions/.github/workflows/nix-generate.yaml@main
+    permissions:
+      contents: write
+    with:
+      commit-back: {% raw %}${{ github.actor == 'renovate[bot]' }}{% endraw +%}
+    secrets: inherit
