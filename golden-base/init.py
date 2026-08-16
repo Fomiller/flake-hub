@@ -55,8 +55,14 @@ def render_flake(packs: list[str], versions: dict[str, str]) -> str:
 """
 
 
-def render_repo_nix(name: str) -> str:
-    return f'{{\n  name = "{name}";\n}}\n'
+def render_repo_nix(name: str, packs: list[str]) -> str:
+    lines = [f'  name = "{name}";']
+    # golden-github makes codeowners required, so a repo that selects it and is
+    # not seeded here cannot generate at all.
+    if "golden-github" in packs:
+        lines.append('  codeowners = [ "@Fomiller" ];')
+    body = "\n".join(lines)
+    return f"{{\n{body}\n}}\n"
 
 
 def main() -> None:
@@ -75,7 +81,7 @@ def main() -> None:
     packs = ALWAYS + [p for p in extra if p not in ALWAYS]
 
     targets = {Path("flake.nix"): render_flake(packs, versions),
-               Path("repo.nix"): render_repo_nix(args.name)}
+               Path("repo.nix"): render_repo_nix(args.name, packs)}
     existing = [str(p) for p in targets if p.exists()]
     if existing:
         sys.exit(f"init: refusing to overwrite {', '.join(existing)}")

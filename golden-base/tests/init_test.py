@@ -29,6 +29,16 @@ def test_repo_nix_carries_the_name(tmp_path):
     assert 'name = "foo";' in (tmp_path / "repo.nix").read_text()
 
 
+def test_github_pack_seeds_codeowners(tmp_path):
+    run(tmp_path, "--name", "foo", "--packs", "github")
+    assert 'codeowners = [ "@Fomiller" ];' in (tmp_path / "repo.nix").read_text()
+
+
+def test_codeowners_is_absent_without_the_github_pack(tmp_path):
+    run(tmp_path, "--name", "foo")
+    assert (tmp_path / "repo.nix").read_text() == '{\n  name = "foo";\n}\n'
+
+
 def test_base_and_engine_are_always_inputs(tmp_path):
     run(tmp_path, "--name", "foo")
     flake = (tmp_path / "flake.nix").read_text()
