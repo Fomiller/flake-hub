@@ -1,0 +1,24 @@
+{% if service.container %}{% set binary = service.binary | default(name, true) %}{% include "_service_header.jinja" %}
+
+{% if language == "go" %}
+FROM {{ languages[language].buildImage }} AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /out/{{ binary }} ./cmd/{{ binary }}
+
+FROM {{ languages[language].runtimeImage }}
+COPY --from=build /out/{{ binary }} /{{ binary }}
+{% elif language == "rust" %}
+FROM {{ languages[language].buildImage }} AS build
+WORKDIR /src
+COPY . .
+RUN cargo build --release
+
+FROM {{ languages[language].runtimeImage }}
+COPY --from=build /src/target/release/{{ binary }} /{{ binary }}
+{% endif %}
+EXPOSE {{ service.port }}
+ENTRYPOINT ["/{{ binary }}"]
+{% endif %}
