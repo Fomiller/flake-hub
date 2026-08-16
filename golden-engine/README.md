@@ -64,6 +64,24 @@ running the other.
 | `retired`   | Deleted, if present.                                          |
 | `unmanaged` | Never touched. Declared per-repo in `repo.nix`, not per-pack.  |
 
+## Templated paths
+
+A template path may carry `{{ key }}` components, for any top-level string in
+the merged config — `templates/helm/{{ name }}/Chart.yaml.jinja` lands at
+`helm/my-service/Chart.yaml`.
+
+makejinja renders file contents but copies path names through untouched, so
+the engine does this substitution itself, in two places that have to agree:
+`render_paths.py` renames the rendered tree, and `plan.nix` rewrites the
+emitted paths before classifying them. Both use the rule in `pathvars.nix`.
+If they disagreed, the plan would point at a file the tree never produced.
+
+Only top-level strings substitute. A path still holding `{{` after
+substitution is an error, not a silent miss.
+
+Ownership globs match the substituted path, so a pack writes
+`helm/*/Chart.yaml` rather than repeating the variable.
+
 ## The executable bit
 
 A pack declares an `executable` list of globs beside `ownership`. It is not a

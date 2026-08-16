@@ -4,10 +4,10 @@ name: Publish chart
 
 on:
   pull_request:
-    paths: [deploy/chart/**]
+    paths: [helm/**]
   push:
     branches: [main]
-    paths: [deploy/chart/**]
+    paths: [helm/**]
 
 jobs:
   chart:
@@ -16,7 +16,7 @@ jobs:
       id-token: write
       contents: read
     with:
-      chart-path: deploy/chart
+      chart-path: helm/{{ name }}
       repo-prefix: {{ deploy.ecrRepo }}
       role-to-assume: {{ deploy.roleToAssume }}
       version: {{ deploy.chartVersion }}

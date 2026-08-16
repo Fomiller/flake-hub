@@ -30,6 +30,18 @@ returns:
 templates produce", the other "what would happen to this repo". You can inspect
 either without running the other.
 
+## Templated paths
+
+A template path may carry `{{ key }}` components, for any top-level string in
+the merged config. `templates/helm/{{ name }}/Chart.yaml.jinja` lands at
+`helm/my-service/Chart.yaml`.
+
+makejinja renders file contents but copies path names through untouched, so
+the engine substitutes paths itself, in two places that must agree: the
+rendered tree and the plan. A path still holding `{{` after substitution is an
+error rather than a silent miss, and ownership globs match the substituted
+path — a pack writes `helm/*/Chart.yaml`, not the variable again.
+
 ## Guards fire at eval
 
 Schema violations, ownership-glob mistakes and pack collisions all throw during

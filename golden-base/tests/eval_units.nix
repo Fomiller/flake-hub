@@ -30,7 +30,8 @@ let
   packB = mkPack "b";
   withPartials = pack: pack // { partials = "${fixtures}/packs/${pack.name}/partials"; };
 
-  plan = import "${engineSrc}/lib/plan.nix" { inherit (pkgs) lib; };
+  pathvars = import "${engineSrc}/lib/pathvars.nix" { inherit (pkgs) lib; };
+  plan = import "${engineSrc}/lib/plan.nix" { inherit (pkgs) lib; inherit pathvars; };
   planFixture = {
     owners = { ".gitignore" = "golden-base"; };
     ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
@@ -270,6 +271,33 @@ in
       { owners = { "a(b" = "golden-base"; }; ownership = { managed = [ "a(b" ]; scaffold = [ ]; retired = [ ]; }; executable = [ ]; }
       planConfig).managed;
     expected = [ "a(b" ];
+  };
+
+  testTemplatedPathIsSubstituted = {
+    expr = (plan.mkPlan
+      {
+        owners = { "helm/{{ name }}/Chart.yaml" = "golden-argocd"; };
+        ownership = { managed = [ "helm/*/Chart.yaml" ]; scaffold = [ ]; retired = [ ]; };
+        executable = [ ];
+      }
+      planConfig).managed;
+    expected = [ "helm/x/Chart.yaml" ];
+  };
+
+  # Only top-level strings are substituted, on both sides. A nested or
+  # non-string key in a path would leave the plan pointing somewhere the
+  # rendered tree never puts a file, so it has to fail loudly.
+  testUnresolvedPathVariableThrows = {
+    expr = (builtins.tryEval (builtins.deepSeq
+      (plan.mkPlan
+        {
+          owners = { "helm/{{ service.port }}/Chart.yaml" = "golden-argocd"; };
+          ownership = { managed = [ "helm/*/Chart.yaml" ]; scaffold = [ ]; retired = [ ]; };
+          executable = [ ];
+        }
+        planConfig)
+      null)).success;
+    expected = false;
   };
 
   testRetiredPathStillEmittedThrows = {
