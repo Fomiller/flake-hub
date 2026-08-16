@@ -20,6 +20,9 @@ jobs:
 {% for step in ci.extraSteps.pre %}
 {{ step | indent(6, true) }}
 {% endfor %}
+{# The lookup happens here because pack defaults are static data and cannot
+   read `language`. So this template does know the shape of the `languages`
+   registry, even though the pack that contributes the job does not name it. #}
 {% if job.stepsFrom == "language" %}
 {{ languages[language].setupStep | indent(6, true) }}
       - name: build

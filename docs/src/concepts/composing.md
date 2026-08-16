@@ -45,6 +45,13 @@ a repo can clear an inherited list with `[ ]` — but cannot append to one.
 A pack adds to another pack's file by adding to a shared list in its `defaults`,
 never by templating that file. The owning pack decides how the entries render.
 
-Keep the contribution opaque to the owner. `golden-service` contributes a CI job
-carrying `stepsFrom = "language"`, and `golden-github` renders it without ever
-learning what a language is.
+Keep the contributing pack out of the owner's file. `golden-service` contributes
+a CI job carrying `stepsFrom = "language"` — a string, not a template fragment —
+and never touches `ci.yml`.
+
+The owner still resolves it. `golden-github`'s template reads
+`languages[language]`, so it does know the shape of that registry. It has to:
+pack defaults are static data and cannot look anything up, and the render is the
+first point where both the registry and `language` are in scope. What the
+arrangement buys is that adding a language is a change in one pack's
+`registry.nix`, not in every template that builds something.

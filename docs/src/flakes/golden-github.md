@@ -37,6 +37,8 @@ carry one.
 The CI workflow renders only if some pack contributed a job. `jobs:` with no
 children is invalid YAML, so a repo with no jobs gets no `ci.yml` at all.
 
-This pack owns `ci.yml` but knows nothing about languages. A job carries
-`stepsFrom`, an opaque string, and the template resolves it against whatever
-registry is in scope.
+This pack owns `ci.yml`, and its template resolves `stepsFrom = "language"`
+against the `languages` registry. That is a real dependency on the shape of
+`golden-service`'s registry, not an abstraction over it — pack defaults are
+static data and cannot look anything up, so the render is the only place both
+the registry and `language` are in scope.
