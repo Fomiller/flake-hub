@@ -1,0 +1,37 @@
+# golden-base
+
+The files every repo gets: `.gitignore`, `.editorconfig`, `.envrc`, a `justfile`
+and a `README.md`. Selecting it is not optional — `init` always includes it.
+
+```nix
+golden-base.url = "github:Fomiller/flake-hub?dir=golden-base&ref=refs/tags/golden-base-<version>";
+```
+
+<!-- BEGIN GENERATED REFERENCE -->
+## Configuration
+
+| Key | Type | Required |
+|---|---|---|
+| `description` | string | no |
+| `just.recipes` | list | no |
+| `name` | string | yes |
+| `unmanaged` | list | no |
+
+## Files
+
+| Class | Paths |
+|---|---|
+| managed | `.gitignore`, `.editorconfig`, `.envrc`, `justfile` |
+| scaffold | `README.md` |
+| retired | _none_ |
+<!-- END GENERATED REFERENCE -->
+
+## Notes
+
+`just.recipes` is a shared list. Any pack can append to it, and the entries land
+in the `justfile` in pack order. A repo can replace the whole list from
+`repo.nix`, but cannot append to it.
+
+`README.md` is scaffold: it is written once, and after that it is yours. The
+generator never touches it again, so the first commit is the only chance to get
+a starting point from here.

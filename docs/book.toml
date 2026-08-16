@@ -1,0 +1,14 @@
+[book]
+authors = ["Forrest Miller"]
+language = "en"
+src = "src"
+title = "flake-hub"
+
+[output.html]
+default-theme = "ayu"
+git-repository-url = "https://github.com/Fomiller/flake-hub"
+edit-url-template = "https://github.com/Fomiller/flake-hub/edit/main/docs/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
