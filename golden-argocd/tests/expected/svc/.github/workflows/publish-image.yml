@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# GENERATED FILE — managed by flake-hub (golden-argocd).
+# Do not edit manually: `nix run .#generate` overwrites it.
+# To change it, edit repo.nix, or the template in the pack that owns it.
+# ---------------------------------------------------------------------------
+
+name: Publish image
+
+on:
+  pull_request:
+    paths: [src/**, Dockerfile]
+  push:
+    branches: [main]
+    paths: [src/**, Dockerfile]
+
+jobs:
+  image:
+    uses: Fomiller/gh-actions/.github/workflows/docker-ecr.yaml@main
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      repository: svc-go
+      role-to-assume: arn:aws:iam::000000000000:role/github-actions
+      aws-region: us-east-1
+      platforms: linux/amd64
+      # A pull request builds the image and throws it away. Only main pushes.
+      push: ${{ github.event_name == 'push' }}
+    secrets: inherit

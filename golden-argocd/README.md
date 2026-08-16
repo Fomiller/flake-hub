@@ -1,7 +1,7 @@
 # golden-argocd
 
 The Helm chart a service ships, the Argo CD overlays that deploy it, and the
-workflow that publishes the chart to ECR as an OCI artifact. Add this pack when
+two workflows that publish the image and the chart to ECR. Add this pack when
 the service is deployed by Argo CD.
 
 Requires `golden-service`: the chart needs `service.port`, and this pack marks
@@ -15,6 +15,7 @@ it required so a repo that forgets fails at eval instead of at render time.
 | `helm/<chart>/templates/*` | managed | deployment, service, helpers |
 | `argocd/overlays/*/kustomization.yaml` | managed | one per selected environment |
 | `.github/workflows/publish-chart.yml` | managed | packages on PRs, pushes on main |
+| `.github/workflows/publish-image.yml` | managed | builds on PRs, pushes on main |
 | `helm/<chart>/values.yaml` | scaffold | chart defaults, written once |
 | `argocd/overlays/values.app.base.yaml` | scaffold | shared across environments |
 | `argocd/overlays/*/values.app.yaml` | scaffold | per-environment overrides |
@@ -27,16 +28,26 @@ repo that grows a second chart puts it beside the first under `helm/`.
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
 | `deploy.registry` | string | yes | — |
-| `deploy.ecrRepo` | string | yes | — |
 | `deploy.roleToAssume` | string | yes | — |
+| `deploy.awsRegion` | string | no | `us-east-1` |
 | `deploy.envs` | list | no | `[ "dev" ]` |
 | `deploy.replicas` | int | no | `1` |
 | `deploy.chartVersion` | string | no | `0.1.0` |
+| `deploy.platforms` | list | no | `[ "linux/amd64" ]` |
 
-`deploy.ecrRepo` is the prefix alone. `helm push` appends the chart's own name
-to the path it is given, so the ECR repo is `<prefix>/<chart-name>` and the push
-target stops at the prefix. Getting this wrong does not error — it silently
-creates a second repo.
+## Two ECR repositories
+
+A service uses two: `<name>` for the image, `<name>-chart` for the chart. Both
+sit at the registry root, so `deploy.registry` is the whole prefix.
+
+The `-chart` suffix is written into `Chart.yaml`'s `name`, not appended by the
+publish workflow. `helm push` reads the repository name out of the packaged
+chart, so a suffix added at push time would make the published chart disagree
+with what `helm template` renders locally. `overlay-chart-name-matches` is the
+check that keeps the chart name and the overlays in step.
+
+Neither repository is created by this pack. Terraform owns them — see
+`golden-infra`.
 
 `deploy.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
 supported, one static template each, for the same reason `golden-infra` works

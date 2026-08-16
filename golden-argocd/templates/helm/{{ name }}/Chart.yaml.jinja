@@ -1,7 +1,10 @@
 {% include "_argocd_header.jinja" %}
 
 apiVersion: v2
-name: {{ name }}
+# The -chart suffix keeps the chart's ECR repository distinct from the image's.
+# `helm push` takes the repository name from here, so the suffix has to be part
+# of the chart's own name rather than something the publish workflow appends.
+name: {{ name }}-chart
 description: A Helm chart for {{ name }}
 type: application
 version: {{ deploy.chartVersion }}

@@ -16,11 +16,12 @@ commented out beside the default they fall back to.
 ```nix
 {
   deploy = {
-    ecrRepo = "…";  # required, string
     registry = "…";  # required, string
     roleToAssume = "…";  # required, string
+    # awsRegion = "us-east-1";  # string, default
     # chartVersion = "0.1.0";  # string, default
     # envs = [ "dev" ];  # list, default
+    # platforms = [ "linux/amd64" ];  # list, default
     # replicas = 1;  # int, default
   };
   service = {
@@ -33,9 +34,10 @@ commented out beside the default they fall back to.
 
 | Key | Type | Required |
 |---|---|---|
+| `deploy.awsRegion` | string | no |
 | `deploy.chartVersion` | string | no |
-| `deploy.ecrRepo` | string | yes |
 | `deploy.envs` | list | no |
+| `deploy.platforms` | list | no |
 | `deploy.registry` | string | yes |
 | `deploy.replicas` | int | no |
 | `deploy.roleToAssume` | string | yes |
@@ -45,7 +47,7 @@ commented out beside the default they fall back to.
 
 | Class | Paths |
 |---|---|
-| managed | `helm/*/Chart.yaml`, `helm/*/templates/*`, `argocd/overlays/*/kustomization.yaml`, `.github/workflows/publish-chart.yml` |
+| managed | `helm/*/Chart.yaml`, `helm/*/templates/*`, `argocd/overlays/*/kustomization.yaml`, `.github/workflows/publish-chart.yml`, `.github/workflows/publish-image.yml` |
 | scaffold | `helm/*/values.yaml`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml` |
 | retired | `deploy/chart/Chart.yaml`, `deploy/chart/values.yaml`, `deploy/chart/templates/deployment.yaml`, `deploy/chart/templates/service.yaml`, `deploy/chart/templates/helpers.tpl` |
 <!-- END GENERATED REFERENCE -->
@@ -73,10 +75,12 @@ Each overlay inflates the chart from OCI with the base values first and its own
 supported, one static template each — the same constraint `golden-infra` has,
 because makejinja renders a static tree.
 
-`deploy.ecrRepo` is the prefix alone. `helm push` appends the chart's own name
-to the path it is given, so the ECR repo is `<prefix>/<chart-name>` and the push
-target stops at the prefix. Getting this wrong does not error — it silently
-creates a second repo.
+A service uses two ECR repositories: `<name>` for the image and `<name>-chart`
+for the chart, both at the registry root. The `-chart` suffix is part of
+`Chart.yaml`'s `name` rather than something the publish workflow appends,
+because `helm push` reads the repository name out of the packaged chart —
+appending at push time would make the published chart disagree with a local
+`helm template`. Neither repository is created here; Terraform owns them.
 
 The helpers file is `helpers.tpl`, not `_helpers.tpl`. The engine excludes `_*`
 from rendering, which is how partials stay out of the output.

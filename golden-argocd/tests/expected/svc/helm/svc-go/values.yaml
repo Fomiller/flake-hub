@@ -3,5 +3,5 @@
 replicas: 1
 
 image:
-  repository: charts/svc-go
+  repository: svc-go
   tag: latest

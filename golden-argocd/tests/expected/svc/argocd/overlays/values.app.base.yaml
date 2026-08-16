@@ -9,4 +9,4 @@ fullnameOverride: svc-go
 replicas: 1
 
 image:
-  repository: 000000000000.dkr.ecr.us-east-1.amazonaws.com/charts/svc-go
+  repository: 000000000000.dkr.ecr.us-east-1.amazonaws.com/svc-go

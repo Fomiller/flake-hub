@@ -39,9 +39,9 @@ commented out beside the default they fall back to.
 
 | Class | Paths |
 |---|---|
-| managed | `CODEOWNERS`, `renovate.json`, `.github/workflows/generate.yml`, `.github/workflows/ci.yml` |
+| managed | `.github/CODEOWNERS`, `renovate.json`, `.github/workflows/generate.yml`, `.github/workflows/ci.yml` |
 | scaffold | _none_ |
-| retired | _none_ |
+| retired | `CODEOWNERS` |
 <!-- END GENERATED REFERENCE -->
 
 ## Notes

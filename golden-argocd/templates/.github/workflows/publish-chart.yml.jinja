@@ -11,14 +11,14 @@ on:
 
 jobs:
   chart:
+    # No chart list. The workflow walks helm/*/Chart.yaml and publishes each
+    # one to the ECR repository named by its own Chart.yaml.
     uses: Fomiller/gh-actions/.github/workflows/helm-ecr.yaml@main
     permissions:
       id-token: write
       contents: read
     with:
-      chart-path: helm/{{ name }}
-      repo-prefix: {{ deploy.ecrRepo }}
       role-to-assume: {{ deploy.roleToAssume }}
-      version: {{ deploy.chartVersion }}
+      aws-region: {{ deploy.awsRegion }}
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
     secrets: inherit
