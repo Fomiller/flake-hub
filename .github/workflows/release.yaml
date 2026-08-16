@@ -8,4 +8,4 @@ jobs:
   release:
     uses: Fomiller/gh-actions/.github/workflows/release-flake.yaml@main
     with:
-      flake-dirs: '["golden-engine","golden-base","golden-github"]'
+      flake-dirs: '["golden-engine","golden-base","golden-github","golden-service","golden-infra","golden-argocd"]'

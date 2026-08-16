@@ -11,4 +11,4 @@ jobs:
   check:
     uses: Fomiller/gh-actions/.github/workflows/nix-flake-check.yaml@main
     with:
-      flake-dirs: '["golden-base","golden-github","renovate"]'
+      flake-dirs: '["golden-base","golden-github","golden-service","golden-infra","golden-argocd","renovate"]'
