@@ -16,6 +16,7 @@
     retired = [ ];
   };
   overrides = [ ];
+  executable = [ ];
   schema = {
     "codeowners" = { type = "list"; required = true; };
     "ci.security" = { type = "bool"; };

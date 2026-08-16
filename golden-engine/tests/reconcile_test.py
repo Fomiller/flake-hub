@@ -25,7 +25,8 @@ def run(tmp_path, plan, files):
 
 
 def base_plan(**kw):
-    plan = {"repo": "t", "managed": [], "scaffold": [], "retired": [], "unmanaged": []}
+    plan = {"repo": "t", "managed": [], "scaffold": [], "retired": [],
+            "unmanaged": [], "executable": []}
     plan.update(kw)
     return plan
 
@@ -79,6 +80,32 @@ def test_unmanaged_file_is_never_touched(tmp_path):
     (root / "Dockerfile").write_text("mine\n")
     run(tmp_path, base_plan(unmanaged=["Dockerfile"]), {"Dockerfile": "generated\n"})
     assert (root / "Dockerfile").read_text() == "mine\n"
+
+
+def test_executable_path_lands_0755_and_others_0644(tmp_path):
+    root = run(
+        tmp_path,
+        base_plan(managed=["scripts/next.sh", "README.md"], executable=["scripts/next.sh"]),
+        {"scripts/next.sh": "#!/bin/sh\n", "README.md": "hi\n"},
+    )
+    assert (root / "scripts" / "next.sh").stat().st_mode & 0o777 == 0o755
+    assert (root / "README.md").stat().st_mode & 0o777 == 0o644
+
+
+def test_wrong_mode_is_corrected_when_content_already_matches(tmp_path):
+    plan = base_plan(managed=["scripts/next.sh"], executable=["scripts/next.sh"])
+    files = {"scripts/next.sh": "#!/bin/sh\n"}
+    root = run(tmp_path, plan, files)
+    (root / "scripts" / "next.sh").chmod(0o644)
+    run(tmp_path, plan, files)
+    assert (root / "scripts" / "next.sh").stat().st_mode & 0o777 == 0o755
+
+
+def test_dropping_a_path_from_executable_takes_the_bit_back(tmp_path):
+    files = {"scripts/next.sh": "#!/bin/sh\n"}
+    run(tmp_path, base_plan(managed=["scripts/next.sh"], executable=["scripts/next.sh"]), files)
+    root = run(tmp_path, base_plan(managed=["scripts/next.sh"]), files)
+    assert (root / "scripts" / "next.sh").stat().st_mode & 0o777 == 0o644
 
 
 def test_second_run_changes_nothing(tmp_path):

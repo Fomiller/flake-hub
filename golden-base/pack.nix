@@ -14,6 +14,7 @@
     retired = [ ];
   };
   overrides = [ ];
+  executable = [ ];
   schema = {
     "name" = { type = "string"; required = true; };
     "description" = { type = "string"; };

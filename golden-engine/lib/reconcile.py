@@ -23,7 +23,11 @@ def main() -> None:
     args = ap.parse_args()
 
     plan = json.loads(args.plan.read_text())
+    executable = set(plan["executable"])
     actions = 0
+
+    def mode_of(rel: str) -> int:
+        return 0o755 if rel in executable else 0o644
 
     for rel in plan["retired"]:
         actions += remove(args.root / rel, rel, "retired")
@@ -31,7 +35,7 @@ def main() -> None:
     for rel in plan["managed"]:
         src = args.files / rel
         if src.exists():
-            actions += write(src, args.root / rel, rel, "managed")
+            actions += write(src, args.root / rel, rel, "managed", mode_of(rel))
         else:
             actions += remove(args.root / rel, rel, "gated off")
 
@@ -41,18 +45,24 @@ def main() -> None:
             continue
         src = args.files / rel
         if src.exists():
-            actions += write(src, dst, rel, "scaffold")
+            actions += write(src, dst, rel, "scaffold", mode_of(rel))
 
     print(f"generate: {plan['repo']}: {actions} change(s)")
 
 
-def write(src: Path, dst: Path, rel: str, why: str) -> int:
+def write(src: Path, dst: Path, rel: str, why: str, mode: int) -> int:
     new = src.read_bytes()
+    # A wrong mode counts as drift on its own. Returning early here on matching
+    # bytes would leave it uncorrected and report the repo clean.
     if dst.exists() and dst.read_bytes() == new:
-        return 0
+        if dst.stat().st_mode & 0o777 == mode:
+            return 0
+        dst.chmod(mode)
+        print(f"  {why}: mode {mode:o} {rel}")
+        return 1
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, dst)
-    dst.chmod(0o644)
+    dst.chmod(mode)
     print(f"  {why}: {rel}")
     return 1
 

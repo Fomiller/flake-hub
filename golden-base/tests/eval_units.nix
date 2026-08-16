@@ -23,6 +23,7 @@ let
     registry = { };
     ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
     overrides = [ ];
+    executable = [ ];
     schema = { };
   };
   packA = mkPack "a";
@@ -33,6 +34,7 @@ let
   planFixture = {
     owners = { ".gitignore" = "golden-base"; };
     ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
+    executable = [ ];
   };
   planConfig = { name = "x"; unmanaged = [ ]; };
 in
@@ -214,11 +216,11 @@ in
     expr =
       let
         matched = plan.mkPlan
-          { owners = { "foo+bar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; }
+          { owners = { "foo+bar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; executable = [ ]; }
           planConfig;
         unrelatedThrows = (builtins.tryEval (builtins.deepSeq
           (plan.mkPlan
-            { owners = { "foobar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; }
+            { owners = { "foobar" = "golden-base"; }; ownership = { managed = [ "foo+bar" ]; scaffold = [ ]; retired = [ ]; }; executable = [ ]; }
             planConfig)
           null)).success;
       in
@@ -228,7 +230,7 @@ in
 
   testGlobWithParenDoesNotCrash = {
     expr = (plan.mkPlan
-      { owners = { "a(b" = "golden-base"; }; ownership = { managed = [ "a(b" ]; scaffold = [ ]; retired = [ ]; }; }
+      { owners = { "a(b" = "golden-base"; }; ownership = { managed = [ "a(b" ]; scaffold = [ ]; retired = [ ]; }; executable = [ ]; }
       planConfig).managed;
     expected = [ "a(b" ];
   };
@@ -244,7 +246,7 @@ in
 
   testUnmanagedPathNeedsNoOwnershipGlob = {
     expr = (plan.mkPlan
-      { owners = { ".gitignore" = "golden-base"; "extra.txt" = "golden-base"; }; ownership = { managed = [ ".gitignore" ]; scaffold = [ ]; retired = [ ]; }; }
+      { owners = { ".gitignore" = "golden-base"; "extra.txt" = "golden-base"; }; ownership = { managed = [ ".gitignore" ]; scaffold = [ ]; retired = [ ]; }; executable = [ ]; }
       (planConfig // { unmanaged = [ "extra.txt" ]; })).managed;
     expected = [ ".gitignore" ];
   };
@@ -259,6 +261,45 @@ in
       type = "ThrownError";
       msg = "(.|\n)*'old.txt' is listed as retired but also declared unmanaged(.|\n)*";
     };
+  };
+
+  testExecutableGlobResolvesToEmittedPaths = {
+    expr = (plan.mkPlan
+      {
+        owners = { "scripts/a.sh" = "p"; "README.md" = "p"; };
+        ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
+        executable = [ "scripts/*" ];
+      }
+      planConfig).executable;
+    expected = [ "scripts/a.sh" ];
+  };
+
+  # A repo may unmanage an executable path; that must not read as a typo.
+  testUnmanagedExecutablePathIsNotStale = {
+    expr = (plan.mkPlan
+      {
+        owners = { "scripts/a.sh" = "p"; };
+        ownership = { managed = [ "**" ]; scaffold = [ ]; retired = [ ]; };
+        executable = [ "scripts/*" ];
+      }
+      (planConfig // { unmanaged = [ "scripts/a.sh" ]; })).executable;
+    expected = [ ];
+  };
+
+  testExecutableGlobMatchingNothingThrows = {
+    expr = plan.mkPlan (planFixture // { executable = [ "scripts/*" ]; }) planConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*executable glob 'scripts/\\*' matches no generated path(.|\n)*";
+    };
+  };
+
+  testMergeUnionsExecutableAcrossPacks = {
+    expr = (merge.mergePacks [
+      (packA // { executable = [ "scripts/*" ]; })
+      (packB // { overrides = [ "shared.txt" ]; executable = [ "bin/*" ]; })
+    ]).executable;
+    expected = [ "scripts/*" "bin/*" ];
   };
 
   testManagedScaffoldOverlapThrows = {

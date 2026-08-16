@@ -50,7 +50,12 @@ in
             && lib.any (g: matches g p) merged.ownership.scaffold)
           live);
 
-      errors = retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted ++ bothClasses;
+      # Checked against everything emitted, not just `live`: a repo is allowed
+      # to declare an executable path unmanaged without that reading as a typo.
+      staleExecutable = map (g: "executable glob '${g}' matches no generated path")
+        (builtins.filter (g: !(lib.any (p: matches g p) emitted)) merged.executable);
+
+      errors = retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted ++ bothClasses ++ staleExecutable;
 
       byClass = cls: builtins.filter (p: classOf merged.ownership p == cls) live;
 
@@ -64,6 +69,7 @@ in
       managed = byClass "managed";
       scaffold = byClass "scaffold";
       retired = merged.ownership.retired;
+      executable = builtins.filter (p: lib.any (g: matches g p) merged.executable) live;
       inherit unmanaged;
     };
 }

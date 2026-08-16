@@ -64,6 +64,21 @@ running the other.
 | `retired`   | Deleted, if present.                                          |
 | `unmanaged` | Never touched. Declared per-repo in `repo.nix`, not per-pack.  |
 
+## The executable bit
+
+A pack declares an `executable` list of globs beside `ownership`. It is not a
+fifth class: a path is classified `managed` or `scaffold` *and*, separately,
+executable. Anything matched lands `0755`; everything else lands `0644`.
+
+`plan.nix` resolves the globs to concrete paths, so the plan JSON carries a
+flat `executable` list and `reconcile.py` needs no globbing. A glob matching
+nothing emitted is an error, same as a stale `unmanaged` entry — both are
+typos nobody would otherwise notice.
+
+Mode counts as drift on its own. A file whose bytes are right but whose mode
+is wrong gets chmod'd and reported as a change; otherwise the drift check
+would call the repo clean.
+
 ## Guards
 
 Validation in this engine (schema checks, ownership-glob checks, pack-merge

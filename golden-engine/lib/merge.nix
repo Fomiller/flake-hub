@@ -49,6 +49,7 @@
       defaults = lib.foldl' lib.recursiveUpdate { } (map (p: p.defaults) packList);
       registry = lib.foldl' lib.recursiveUpdate { } (map (p: p.registry) packList);
       schema = lib.foldl' lib.recursiveUpdate { } (map (p: p.schema) packList);
+      executable = lib.concatMap (p: p.executable) packList;
       ownership = {
         managed = lib.concatMap (p: p.ownership.managed) packList;
         scaffold = lib.concatMap (p: p.ownership.scaffold) packList;
