@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     branches: [main]
+  # Tagging skips anything already released, so re-running is safe and is the
+  # only way to cut a release when the VERSION bump has already landed.
+  workflow_dispatch:
 
 jobs:
   release:
