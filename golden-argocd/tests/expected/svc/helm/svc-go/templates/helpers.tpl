@@ -1,6 +1,10 @@
 {{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
+{{- /* The chart is named <service>-chart so its ECR repository does not collide
+       with the image's. The suffix belongs to the artifact, not the workload,
+       so it comes back off here — otherwise every selector label names the
+       chart instead of the app. */ -}}
 {{- define "chart.name" -}}
-{{- .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- .Chart.Name | trimSuffix "-chart" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- /* Without fullnameOverride, resources are named <release>-<chart>, which
