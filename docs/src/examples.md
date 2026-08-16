@@ -17,7 +17,7 @@ Read this one first if you want to see what the baseline costs.
 <https://github.com/Fomiller/flake-hub-example-service>
 
 Every pack turned on: base, github, service, infra and argocd. A 28-line
-`repo.nix` produces 22 files — the base set, the workflows, a Dockerfile, the
+`repo.nix` produces 33 files — the base set, the workflows, a Dockerfile, the
 terragrunt frame for two environments, a Helm chart under `helm/`, and the
 Argo CD overlays that deploy it.
 
@@ -25,13 +25,19 @@ The overlays are worth a look. Each one inflates the chart from OCI with a
 shared values file plus its own, so dev runs one replica on `:latest` while
 prod runs two on a pinned tag, from the same chart.
 
-It is also the place to look for the line between generated and hand-written.
-The Go service, the terragrunt units and the Argo CD Applications are all
-hand-written. The packs build the frame around them.
+The two ECR repositories are worth a look too. `flake-hub-example-service`
+holds the image and `flake-hub-example-service-chart` holds the chart, and the
+suffix lives in `Chart.yaml` because `helm push` reads the repository name out
+of the packaged chart.
 
-`deploy-infra` and `publish-chart` are disabled there. They are wired
-correctly but point at an AWS account that does not exist, so leaving them on
-would only produce red runs.
+It is also the place to look for the line between generated and hand-written.
+The Go service and the terragrunt units and stacks are hand-written. The packs
+build the frame around them. There are no Argo CD `Application` manifests —
+the cluster runs one ApplicationSet that finds `argocd/overlays/<env>`.
+
+`deploy-infra`, `publish-chart` and `publish-image` are disabled there. They
+are wired correctly but point at an AWS account that does not exist, so
+leaving them on would only produce red runs.
 
 ## Trying it yourself
 
