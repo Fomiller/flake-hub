@@ -1,0 +1,17 @@
+{% if "prod" in deploy.envs %}{% include "_argocd_header.jinja" %}
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  - name: {{ name }}
+    repo: oci://{{ deploy.registry }}/{{ deploy.ecrRepo }}
+    version: {{ deploy.chartVersion }}
+    releaseName: {{ name }}-prod
+    namespace: {{ name }}
+    # Shared defaults first, this environment's overrides second. On a key both
+    # files set, the later one wins.
+    valuesFile: ../values.app.base.yaml
+    additionalValuesFiles:
+      - values.app.yaml
+{% endif %}

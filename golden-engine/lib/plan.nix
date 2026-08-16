@@ -1,4 +1,4 @@
-{ lib }:
+{ lib, pathvars }:
 let
   # Everything except `*` is escaped, so a pack glob containing a regex
   # metacharacter matches it literally instead of crashing builtins.match.
@@ -24,7 +24,15 @@ in
 {
   mkPlan = merged: config:
     let
-      emitted = builtins.attrNames merged.owners;
+      # Template paths may carry {{ key }}. Everything below works on the
+      # substituted path, which is where the file actually lands.
+      owners = lib.mapAttrs' (p: pack: lib.nameValuePair (pathvars.substitute config p) pack)
+        merged.owners;
+
+      emitted = builtins.attrNames owners;
+
+      unresolved = map (p: "'${p}' still holds an unresolved {{ ... }} after path substitution; only top-level string keys can appear in a path")
+        (builtins.filter (p: lib.hasInfix "{{" p) emitted);
       unmanaged = config.unmanaged or [ ];
       live = builtins.filter (p: !(builtins.elem p unmanaged)) emitted;
 
@@ -38,10 +46,10 @@ in
       stale = map (u: "unmanaged entry '${u}' in repo.nix matches no generated path")
         (builtins.filter (u: !(builtins.elem u emitted) && !(builtins.elem u retiredAndUnmanaged)) unmanaged);
 
-      unclassified = map (p: "'${p}' is rendered by ${merged.owners.${p}} but matches no ownership glob")
+      unclassified = map (p: "'${p}' is rendered by ${owners.${p}} but matches no ownership glob")
         (builtins.filter (p: classOf merged.ownership p == null) live);
 
-      retiredButEmitted = map (p: "'${p}' is listed as retired but is still emitted by ${merged.owners.${p}}")
+      retiredButEmitted = map (p: "'${p}' is listed as retired but is still emitted by ${owners.${p}}")
         (builtins.filter (p: builtins.elem p emitted) merged.ownership.retired);
 
       bothClasses = map (p: "'${p}' matches both a managed and a scaffold glob; make the globs disjoint")
@@ -55,7 +63,7 @@ in
       staleExecutable = map (g: "executable glob '${g}' matches no generated path")
         (builtins.filter (g: !(lib.any (p: matches g p) emitted)) merged.executable);
 
-      errors = retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted ++ bothClasses ++ staleExecutable;
+      errors = unresolved ++ retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted ++ bothClasses ++ staleExecutable;
 
       byClass = cls: builtins.filter (p: classOf merged.ownership p == cls) live;
 

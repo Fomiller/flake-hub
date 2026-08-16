@@ -6,10 +6,10 @@ name: Publish chart
 
 on:
   pull_request:
-    paths: [deploy/chart/**]
+    paths: [helm/**]
   push:
     branches: [main]
-    paths: [deploy/chart/**]
+    paths: [helm/**]
 
 jobs:
   chart:
@@ -18,7 +18,7 @@ jobs:
       id-token: write
       contents: read
     with:
-      chart-path: deploy/chart
+      chart-path: helm/svc-go
       repo-prefix: charts
       role-to-assume: arn:aws:iam::000000000000:role/github-actions
       version: 0.1.0

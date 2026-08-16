@@ -1,0 +1,8 @@
+{% if "staging" in deploy.envs %}# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
+# staging overrides, layered on ../values.app.base.yaml. Only keys that differ
+# from the base belong here.
+
+image:
+  tag: latest
+{% endif %}

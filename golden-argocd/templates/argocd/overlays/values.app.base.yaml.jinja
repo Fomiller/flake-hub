@@ -1,0 +1,12 @@
+# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
+# Shared chart values. Every overlay inflates the chart with this file first
+# and layers its own values.app.yaml on top, so a per-environment file only
+# carries what actually differs.
+
+fullnameOverride: {{ name }}
+
+replicas: {{ deploy.replicas }}
+
+image:
+  repository: {{ deploy.registry }}/{{ deploy.ecrRepo }}/{{ name }}

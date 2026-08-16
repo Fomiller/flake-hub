@@ -1,0 +1,12 @@
+# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
+# Shared chart values. Every overlay inflates the chart with this file first
+# and layers its own values.app.yaml on top, so a per-environment file only
+# carries what actually differs.
+
+fullnameOverride: svc-go
+
+replicas: 1
+
+image:
+  repository: 000000000000.dkr.ecr.us-east-1.amazonaws.com/charts/svc-go

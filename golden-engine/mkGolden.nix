@@ -10,7 +10,8 @@ let
   paths = import ./lib/paths.nix { inherit lib; };
   merge = import ./lib/merge.nix { inherit lib paths; };
   configLib = import ./lib/config.nix { inherit lib; };
-  planLib = import ./lib/plan.nix { inherit lib; };
+  pathvars = import ./lib/pathvars.nix { inherit lib; };
+  planLib = import ./lib/plan.nix { inherit lib pathvars; };
 
   merged = merge.mergePacks packs;
   mergedConfig = configLib.mergeConfig merged repoConfig;
@@ -24,7 +25,7 @@ let
 
   filesDrv = pkgs.runCommand "golden-files-${mergedConfig.name}"
     {
-      nativeBuildInputs = [ pkgs.makejinja ];
+      nativeBuildInputs = [ pkgs.makejinja pkgs.python3 ];
       # Forces every plan guard. Without this a lazy throw never fires.
       planChecksum = builtins.hashString "sha256" (builtins.toJSON planData);
     }
@@ -33,6 +34,7 @@ let
       makejinja ${inputArgs} -o "$out" -d ${renderData} \
         --undefined strict \
         --exclude-pattern '_*'
+      python3 ${./lib/render_paths.py} "$out" ${renderData}
     '';
 
   generateApp = {

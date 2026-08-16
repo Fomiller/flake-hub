@@ -40,8 +40,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 6 ]; then
-              echo "expected tree holds $found files, not 6" >&2
+            if [ "$found" -ne 11 ]; then
+              echo "expected tree holds $found files, not 11" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
@@ -54,12 +54,39 @@
           checks.chart-renders = pkgs.runCommand "chart-renders"
             { nativeBuildInputs = [ pkgs.kubernetes-helm ]; }
             ''
-              cp -r ${golden.filesDrv}/deploy/chart chart && chmod -R +w chart
+              cp -r ${golden.filesDrv}/helm/svc-go chart && chmod -R +w chart
               helm template test ./chart > rendered.yaml
               helm lint ./chart
               grep -q 'containerPort: 8080' rendered.yaml
               touch $out
             '';
+
+          # An overlay that names a values file which is not there fails only
+          # when Argo CD tries to sync it, which is a long way from here.
+          checks.overlay-values-files-exist = pkgs.runCommand "overlay-values-files-exist"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              cd ${golden.filesDrv}/argocd/overlays
+              for k in */kustomization.yaml; do
+                dir=$(dirname "$k")
+                for f in $(yq -r '.helmCharts[].valuesFile, .helmCharts[].additionalValuesFiles[]' "$k"); do
+                  if [ ! -e "$dir/$f" ]; then
+                    echo "$k names $f, which does not exist" >&2
+                    exit 1
+                  fi
+                done
+              done
+              touch $out
+            '';
+
+          # An overlay for an unselected environment must not land at all.
+          checks.unselected-env-has-no-overlay = pkgs.runCommand "unselected-env-has-no-overlay" { } ''
+            if [ -e ${golden.filesDrv}/argocd/overlays/staging ]; then
+              echo "staging is not in deploy.envs but its overlay was rendered" >&2
+              exit 1
+            fi
+            touch $out
+          '';
 
           checks.rendered-workflows-lint = pkgs.runCommand "rendered-workflows-lint"
             { nativeBuildInputs = [ pkgs.actionlint ]; }
