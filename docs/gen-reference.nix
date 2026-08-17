@@ -63,9 +63,7 @@ let
         else if default != null then "${typeName e}, default"
         else "${typeName e}, no default";
     in
-    if required
-    then "${indent}${name} = ${value};  # ${note}"
-    else "${indent}# ${name} = ${value};  # ${note}";
+    "${indent}${name} = ${value};  # ${note}";
 
   entry = indent: name: node:
     if node ? __key
@@ -88,8 +86,8 @@ let
   example = ''
     ## repo.nix
 
-    Every knob this pack adds. Required keys are filled in; optional ones are
-    commented out beside the default they fall back to.
+    Every knob this pack adds. Optional keys show the default they fall back
+    to, so deleting a line changes nothing. Required keys need a real value.
 
     ```nix
     {

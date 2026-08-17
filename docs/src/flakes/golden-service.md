@@ -10,16 +10,16 @@ golden-service.url = "github:Fomiller/flake-hub?dir=golden-service&ref=refs/tags
 <!-- BEGIN GENERATED REFERENCE -->
 ## repo.nix
 
-Every knob this pack adds. Required keys are filled in; optional ones are
-commented out beside the default they fall back to.
+Every knob this pack adds. Optional keys show the default they fall back
+to, so deleting a line changes nothing. Required keys need a real value.
 
 ```nix
 {
   language = "go";  # required, enum: go | rust
   service = {
-    # binary = "…";  # string, no default
-    # container = true;  # bool, default
-    # port = 8080;  # int, default
+    binary = "…";  # string, no default
+    container = true;  # bool, default
+    port = 8080;  # int, default
   };
 }
 ```
