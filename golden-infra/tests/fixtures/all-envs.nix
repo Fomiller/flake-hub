@@ -6,6 +6,5 @@
     stateBucket = "fomiller-tfstate-all";
     ownerEmail = "forrestmillerj@gmail.com";
     envs = [ "dev" "staging" "prod" ];
-    tailscale = false;
   };
 }

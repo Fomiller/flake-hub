@@ -65,6 +65,53 @@
             touch $out
           '';
 
+          # The state bucket and the owner tag are three-deep: variables.hcl,
+          # then repo.nix, then a derived name. Only terragrunt can tell us the
+          # chain actually resolves that way.
+          checks.variables-hcl-overrides-win = pkgs.runCommand "variables-hcl-overrides-win"
+            { nativeBuildInputs = [ pkgs.terragrunt ]; }
+            ''
+              export HOME=$TMPDIR
+              cp -r ${(render ./tests/fixtures/dev-only.nix).filesDrv}/infra .
+              chmod -R +w infra
+              unit=infra/live/dev/aws/common/ecr
+              mkdir -p $unit
+              cat > $unit/terragrunt.hcl <<'EOF'
+              include "root" {
+                path = find_in_parent_folders("root.hcl")
+              }
+              inputs = { asset_name = "ecr" }
+              EOF
+
+              rendered() { (cd $unit && terragrunt render --json --out -); }
+
+              # No variables.hcl: the fixture sets no infra.stateBucket either,
+              # so both fall through to the derived name and the repo.nix email.
+              rendered | grep -q '"bucket":"fomiller-dev-terraform-state"'
+              rendered | grep -q 'forrestmillerj@gmail.com'
+
+              cat > infra/live/variables.hcl <<'EOF'
+              locals {
+                bucket      = "override-bucket"
+                owner_email = "someone@else"
+              }
+              EOF
+              rendered | grep -q '"bucket":"override-bucket"'
+              rendered | grep -q 'someone@else'
+              ! rendered | grep -q 'forrestmillerj@gmail.com'
+
+              # Nearest file wins, and a file may set only one of the keys.
+              cat > infra/live/dev/variables.hcl <<'EOF'
+              locals {
+                bucket = "per-env-bucket"
+              }
+              EOF
+              rendered | grep -q '"bucket":"per-env-bucket"'
+              rendered | grep -q 'forrestmillerj@gmail.com'
+
+              touch $out
+            '';
+
           checks.rendered-justfile-parses = pkgs.runCommand "rendered-justfile-parses"
             { nativeBuildInputs = [ pkgs.just ]; }
             ''

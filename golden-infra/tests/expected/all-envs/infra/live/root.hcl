@@ -18,8 +18,26 @@ locals {
   version_vars = read_terragrunt_config(find_in_parent_folders("version.hcl"))
   account_vars = read_terragrunt_config(find_in_parent_folders("account.hcl"))
 
+  # variables.hcl is optional and hand-written. try() covers both the missing
+  # file and a file that does not set the key.
+  variable_vars = try(read_terragrunt_config(find_in_parent_folders("variables.hcl")), { locals = {} })
+
   environment = local.account_vars.locals.environment
   region      = local.account_vars.locals.region
+
+  state_bucket = coalesce(
+    try(local.variable_vars.locals.bucket, null),
+    "fomiller-tfstate-all",
+    "${local.service_vars.locals.namespace}-${local.environment}-terraform-state"
+  )
+
+  # The override has to happen here, not in tags.hcl: find_in_parent_folders()
+  # inside a nested read starts above that file's own directory, so a
+  # variables.hcl sitting beside tags.hcl would never be seen.
+  default_tags = merge(
+    local.tag_vars.locals.default_tags,
+    try({ email = local.variable_vars.locals.owner_email }, {})
+  )
 
   # path_relative_to_include() is "<env>/<provider>/<scope>/<unit...>";
   # segment [1] is the provider.
@@ -44,7 +62,7 @@ locals {
       provider "aws" {
         region = "${local.region}"
         default_tags {
-          tags = ${jsonencode(local.tag_vars.locals.default_tags)}
+          tags = ${jsonencode(local.default_tags)}
         }
       }
     EOT
@@ -56,7 +74,7 @@ remote_state {
   config = {
     encrypt               = true
     disable_bucket_update = true
-    bucket                = "fomiller-tfstate-all"
+    bucket                = local.state_bucket
     # <repo>/<env>/<provider>/<scope>/<unit>/terraform.tfstate. repo_name is
     # what keeps two repos sharing this bucket from colliding.
     key          = "${local.service_vars.locals.repo_name}/${path_relative_to_include()}/terraform.tfstate"
