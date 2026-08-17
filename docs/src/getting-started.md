@@ -14,6 +14,11 @@ nix run github:Fomiller/flake-hub?dir=golden-base#init -- \
 `flake.nix` and `repo.nix` and refuses to overwrite either if it already
 exists.
 
+A pack input is one line — no `follows`. A consumer reads only `<pack>.pack`,
+which is a plain import of the pack's `pack.nix`, so a pack flake's own
+`nixpkgs` never reaches your build. The engine that runs is the `golden-engine`
+you pinned.
+
 `golden-service` marks `language` required and has no default for it, so add it
 to `repo.nix` before the first run:
 

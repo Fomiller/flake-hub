@@ -19,13 +19,10 @@ def read_versions(path: Path) -> dict[str, str]:
     return dict(re.findall(r'^\s*([\w-]+)\s*=\s*"([^"]+)";', path.read_text(), re.M))
 
 
+# No `follows` lines. A consumer reads only `<pack>.pack`, which is a plain
+# import of pack.nix, so a pack flake's own inputs never reach the build.
 def input_line(pack: str, version: str) -> str:
-    lines = [f'    {pack}.url = "{REPO}?dir={pack}&ref=refs/tags/{pack}-{version}";']
-    # golden-engine has no inputs of its own; every other pack takes both.
-    if pack != "golden-engine":
-        lines.append(f'    {pack}.inputs.nixpkgs.follows = "nixpkgs";')
-        lines.append(f'    {pack}.inputs.golden-engine.follows = "golden-engine";')
-    return "\n".join(lines)
+    return f'    {pack}.url = "{REPO}?dir={pack}&ref=refs/tags/{pack}-{version}";'
 
 
 def render_flake(packs: list[str], versions: dict[str, str]) -> str:
