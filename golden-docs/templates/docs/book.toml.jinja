@@ -1,0 +1,21 @@
+{% include "_docs_header.jinja" %}
+
+[book]
+authors = [{% for author in docs.authors %}"{{ author }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+language = "en"
+src = "src"
+title = "{{ docs.title or name }}"
+
+[output.html]
+additional-css = ["./theme/catppuccin.css"]
+# Both, so the book looks the same whatever the reader's OS is set to.
+default-theme = "{{ docs.theme }}"
+preferred-dark-theme = "{{ docs.theme }}"
+{% if docs.repoUrl %}
+git-repository-url = "{{ docs.repoUrl }}"
+edit-url-template = "{{ docs.repoUrl }}/edit/main/docs/{path}"
+{% endif %}
+
+[output.html.fold]
+enable = true
+level = 1

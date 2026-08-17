@@ -16,6 +16,7 @@ Each flake lives in its own top-level directory.
 | `golden-service` | A pack. What a compiled service needs, per language.                     |
 | `golden-infra`   | A pack. Terragrunt scaffolding and the deploy workflow.                  |
 | `golden-argocd`  | A pack. The Helm chart, the overlays, and the two publish workflows.     |
+| `golden-docs`    | A pack. An mdbook site and the workflow that publishes it.               |
 | `renovate`       | The Renovate preset repos extend, so pack updates land as PRs.           |
 | `docs`           | The mdbook. Its config reference is generated from the packs.            |
 

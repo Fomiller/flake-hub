@@ -15,4 +15,4 @@ jobs:
     permissions:
       contents: write
     with:
-      flake-dirs: '["golden-engine","golden-base","golden-github","golden-service","golden-infra","golden-argocd"]'
+      flake-dirs: '["golden-engine","golden-base","golden-github","golden-service","golden-infra","golden-argocd","golden-docs"]'

@@ -5,7 +5,10 @@ src = "src"
 title = "flake-hub"
 
 [output.html]
-default-theme = "ayu"
+additional-css = ["./theme/catppuccin.css"]
+# Both, so the book looks the same whatever the reader's OS is set to.
+default-theme = "frappe"
+preferred-dark-theme = "frappe"
 git-repository-url = "https://github.com/Fomiller/flake-hub"
 edit-url-template = "https://github.com/Fomiller/flake-hub/edit/main/docs/{path}"
 

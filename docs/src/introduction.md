@@ -23,6 +23,7 @@ sees is the actual change, not a version bump they have to imagine.
 | `golden-service` | `github:Fomiller/flake-hub?dir=golden-service&ref=refs/tags/golden-service-<version>` |
 | `golden-infra` | `github:Fomiller/flake-hub?dir=golden-infra&ref=refs/tags/golden-infra-<version>` |
 | `golden-argocd` | `github:Fomiller/flake-hub?dir=golden-argocd&ref=refs/tags/golden-argocd-<version>` |
+| `golden-docs` | `github:Fomiller/flake-hub?dir=golden-docs&ref=refs/tags/golden-docs-<version>` |
 
 Every pack is tagged `<pack>-<semver>` on this one repo. That is why the
 Renovate preset anchors its version match per pack: the tags all share a
