@@ -16,6 +16,31 @@ let
     then lib.hasPrefix (lib.removeSuffix "**" pattern) path
     else builtins.match (toRegex pattern) path != null;
 
+  # A pack declares `retireTrees = [ { unless = "argocd.enabled"; trees = [ "argocd" ]; } ]`.
+  # Data, not a function, because pack.nix is imported with no arguments.
+  treeEntries = merged: config:
+    let
+      entries = merged.retireTrees or [ ];
+      gateOf = entry: lib.attrByPath (lib.splitString "." entry.unless) null config;
+      badGate = lib.concatMap
+        (entry:
+          let v = gateOf entry; in
+          if builtins.isBool v then [ ]
+          else [ "retireTrees gate '${entry.unless}' is ${if v == null then "not set in the merged config" else "not a bool"}" ])
+        entries;
+      badTree = lib.concatMap
+        (entry: map (t: "retireTrees tree '${t}' must be a plain relative directory")
+          (builtins.filter
+            (t: t == "" || lib.hasPrefix "/" t || lib.hasInfix ".." t || lib.hasInfix "*" t)
+            entry.trees))
+        entries;
+      active = lib.concatMap (entry: if gateOf entry == false then entry.trees else [ ]) entries;
+    in
+    {
+      errors = badGate ++ badTree;
+      trees = lib.unique active;
+    };
+
   classOf = ownership: path:
     if lib.any (p: matches p path) ownership.managed then "managed"
     else if lib.any (p: matches p path) ownership.scaffold then "scaffold"
@@ -63,7 +88,17 @@ in
       staleExecutable = map (g: "executable glob '${g}' matches no generated path")
         (builtins.filter (g: !(lib.any (p: matches g p) emitted)) merged.executable);
 
-      errors = unresolved ++ retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted ++ bothClasses ++ staleExecutable;
+      trees = treeEntries merged config;
+
+      # A retired tree takes hand-written files with it, so a repo cannot keep
+      # anything under it.
+      unmanagedUnderTree = lib.concatMap
+        (t: map (u: "unmanaged entry '${u}' in repo.nix sits under '${t}', which is retired wholesale")
+          (builtins.filter (u: lib.hasPrefix "${t}/" u) unmanaged))
+        trees.trees;
+
+      errors = unresolved ++ retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted
+        ++ bothClasses ++ staleExecutable ++ trees.errors ++ unmanagedUnderTree;
 
       byClass = cls: builtins.filter (p: classOf merged.ownership p == cls) live;
 
@@ -77,6 +112,7 @@ in
       managed = byClass "managed";
       scaffold = byClass "scaffold";
       retired = merged.ownership.retired;
+      retiredTrees = trees.trees;
       executable = builtins.filter (p: lib.any (g: matches g p) merged.executable) live;
       inherit unmanaged;
     };

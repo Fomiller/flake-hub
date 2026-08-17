@@ -74,6 +74,43 @@ def test_retired_file_is_deleted(tmp_path):
     assert not (root / "old.yml").exists()
 
 
+def test_retired_tree_takes_hand_written_files_with_it(tmp_path):
+    root = tmp_path / "root"
+    (root / "argocd" / "overlays" / "dev").mkdir(parents=True)
+    (root / "argocd" / "overlays" / "dev" / "values.yaml").write_text("mine\n")
+    (root / "keep.txt").write_text("keep\n")
+    run(tmp_path, base_plan(retiredTrees=["argocd"]), {})
+    assert not (root / "argocd").exists()
+    assert (root / "keep.txt").read_text() == "keep\n"
+
+
+def test_retired_tree_that_is_absent_is_not_a_change(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    plan_path = tmp_path / "plan.json"
+    files_dir = tmp_path / "files"
+    files_dir.mkdir()
+    plan_path.write_text(json.dumps(base_plan(retiredTrees=["argocd"])))
+    out = subprocess.run(
+        [sys.executable, str(RECONCILE), "--files", str(files_dir),
+         "--plan", str(plan_path), "--root", str(root)],
+        check=True, capture_output=True, text=True,
+    )
+    assert "0 change(s)" in out.stdout
+
+
+# A tree is retired before anything is written, so a path that moved out of a
+# gated-off directory in the same release is not deleted after being written.
+def test_retired_tree_runs_before_managed_writes(tmp_path):
+    root = tmp_path / "root"
+    (root / "docs").mkdir(parents=True)
+    (root / "docs" / "stale.md").write_text("old\n")
+    run(tmp_path, base_plan(retiredTrees=["docs"], managed=["docs/book.toml"]),
+        {"docs/book.toml": "new\n"})
+    assert (root / "docs" / "book.toml").read_text() == "new\n"
+    assert not (root / "docs" / "stale.md").exists()
+
+
 # reconcile.py never reads plan["unmanaged"] — plan.nix drops those paths before
 # the plan is written. So this covers the reconcile half only: a rendered file the
 # plan does not classify is not copied out. The unmanaged classification itself is

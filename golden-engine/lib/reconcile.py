@@ -29,6 +29,9 @@ def main() -> None:
     def mode_of(rel: str) -> int:
         return 0o755 if rel in executable else 0o644
 
+    for rel in plan.get("retiredTrees", []):
+        actions += remove_tree(args.root / rel, rel)
+
     for rel in plan["retired"]:
         actions += remove(args.root / rel, rel, "retired")
 
@@ -64,6 +67,16 @@ def write(src: Path, dst: Path, rel: str, why: str, mode: int) -> int:
     shutil.copyfile(src, dst)
     dst.chmod(mode)
     print(f"  {why}: {rel}")
+    return 1
+
+
+def remove_tree(dst: Path, rel: str) -> int:
+    # Hand-written files go too. That is the point of a gate being off: the
+    # directory is not part of this repo any more.
+    if not dst.is_dir():
+        return 0
+    shutil.rmtree(dst)
+    print(f"  retired tree: removed {rel}/")
     return 1
 
 
