@@ -27,13 +27,13 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ## Configuration
 
-| Key | Type | Required |
-|---|---|---|
-| `description` | string | no |
-| `gitignore` | list | no |
-| `just.recipes` | list | no |
-| `name` | string | yes |
-| `unmanaged` | list | no |
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `description` | string | no | `""` | One line about the repo. Shown in the generated README. |
+| `gitignore` | list | no | `[ "result" "result-*" ".direnv/" ".DS_Store" ]` | Lines written to .gitignore, one per entry. Packs append to this. |
+| `just.recipes` | list | no | `[ ]` | Recipes written to the justfile. Packs append to this. |
+| `name` | string | yes | — | Repo name. Reaches the README, the chart directory, and the image repository. |
+| `unmanaged` | list | no | `[ ]` | Paths the engine leaves alone even though a pack owns them. |
 
 ## Files
 

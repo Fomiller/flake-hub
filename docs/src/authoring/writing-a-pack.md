@@ -18,9 +18,13 @@ misspelled field name is an evaluation error rather than silence.
 | `ownership` | attrs | `managed`, `scaffold` and `retired` glob lists |
 | `overrides` | list | paths this pack deliberately takes over from an earlier pack |
 | `executable` | list | globs whose generated files land `0755` |
-| `schema` | attrs | dotted key to `{ type; required?; values?; }` |
+| `schema` | attrs | dotted key to `{ type; description; required?; values?; }` |
 
 Schema types: `string`, `bool`, `int`, `list`, `attrs`, `enum` (with `values`).
+
+`description` is one sentence, and it is not optional — `gen-reference` throws
+on a key without one, so a pack with an undocumented knob cannot make it into
+the docs.
 
 ## Templates
 

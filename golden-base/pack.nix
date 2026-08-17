@@ -21,10 +21,26 @@
   overrides = [ ];
   executable = [ ];
   schema = {
-    "name" = { type = "string"; required = true; };
-    "description" = { type = "string"; };
-    "gitignore" = { type = "list"; };
-    "just.recipes" = { type = "list"; };
-    "unmanaged" = { type = "list"; };
+    "name" = {
+      type = "string";
+      required = true;
+      description = "Repo name. Reaches the README, the chart directory, and the image repository.";
+    };
+    "description" = {
+      type = "string";
+      description = "One line about the repo. Shown in the generated README.";
+    };
+    "gitignore" = {
+      type = "list";
+      description = "Lines written to .gitignore, one per entry. Packs append to this.";
+    };
+    "just.recipes" = {
+      type = "list";
+      description = "Recipes written to the justfile. Packs append to this.";
+    };
+    "unmanaged" = {
+      type = "list";
+      description = "Paths the engine leaves alone even though a pack owns them.";
+    };
   };
 }

@@ -46,13 +46,40 @@
     # Declared here, not just consumed: the chart templates need a port, and a
     # repo that takes this pack without golden-service should fail at eval
     # rather than at render time.
-    "service.port" = { type = "int"; required = true; };
-    "argocd.registry" = { type = "string"; required = true; };
-    "argocd.roleToAssume" = { type = "string"; required = true; };
-    "argocd.awsRegion" = { type = "string"; };
-    "argocd.envs" = { type = "list"; };
-    "argocd.replicas" = { type = "int"; };
-    "argocd.chartVersion" = { type = "string"; };
-    "argocd.platforms" = { type = "list"; };
+    "service.port" = {
+      type = "int";
+      required = true;
+      description = "Port the chart's Service and Deployment expose.";
+    };
+    "argocd.registry" = {
+      type = "string";
+      required = true;
+      description = "OCI registry host. Both the image and the chart sit at its root.";
+    };
+    "argocd.roleToAssume" = {
+      type = "string";
+      required = true;
+      description = "IAM role the publish workflows assume over OIDC.";
+    };
+    "argocd.awsRegion" = {
+      type = "string";
+      description = "Region the publish workflows log in to ECR against.";
+    };
+    "argocd.envs" = {
+      type = "list";
+      description = "Which environments get an overlay. Only dev, staging and prod exist.";
+    };
+    "argocd.replicas" = {
+      type = "int";
+      description = "Replica count in the shared overlay values, before per-environment overrides.";
+    };
+    "argocd.chartVersion" = {
+      type = "string";
+      description = "Chart version in Chart.yaml, and the version the overlays pull.";
+    };
+    "argocd.platforms" = {
+      type = "list";
+      description = "Platforms the image is built for, passed to buildx.";
+    };
   };
 }

@@ -28,12 +28,12 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ## Configuration
 
-| Key | Type | Required |
-|---|---|---|
-| `ci.extraSteps.post` | list | no |
-| `ci.extraSteps.pre` | list | no |
-| `ci.jobs` | list | no |
-| `codeowners` | list | yes |
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `ci.extraSteps.post` | list | no | `[ ]` | Steps run after every CI job's own steps. |
+| `ci.extraSteps.pre` | list | no | `[ ]` | Steps run before every CI job's own steps. |
+| `ci.jobs` | list | no | `[ ]` | Jobs added to ci.yml. Packs append to this. |
+| `codeowners` | list | yes | — | GitHub handles or teams that own every path. Written to .github/CODEOWNERS. |
 
 ## Files
 
