@@ -8,7 +8,7 @@ other repo.
 
 | Path | Class | Notes |
 | --- | --- | --- |
-| `CODEOWNERS` | managed | `* <owners>`, from `codeowners` |
+| `CODEOWNERS` | managed | `* <owners>`, from `github.codeowners` |
 | `renovate.json` | managed | extends the hub's shared preset |
 | `.github/workflows/generate.yml` | managed | regenerates on PRs touching `flake.nix`, `flake.lock` or `repo.nix`; commits back only on Renovate's PRs |
 | `.github/workflows/ci.yml` | managed | one job per entry in `ci.jobs`; not emitted at all when no pack contributed one |
@@ -17,12 +17,16 @@ other repo.
 
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
-| `codeowners` | list | yes | — |
+| `github.codeowners` | list | yes | — |
+| `github.roleToAssume` | string | no | `""` |
+| `github.renovate` | bool | no | `true` |
+| `github.buildAndTest` | bool | no | `true` |
+| `github.agents` | bool | no | `true` |
 | `ci.jobs` | list | no | `[ ]` |
 | `ci.extraSteps.pre` | list | no | `[ ]` |
 | `ci.extraSteps.post` | list | no | `[ ]` |
 
-`init --packs github` seeds `codeowners` for you, since a repo that selects this
+`init --packs github` seeds `github.codeowners` for you, since a repo that selects this
 pack cannot generate without it.
 
 ## Generated files with no header

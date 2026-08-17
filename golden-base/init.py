@@ -54,10 +54,10 @@ def render_flake(packs: list[str], versions: dict[str, str]) -> str:
 
 def render_repo_nix(name: str, packs: list[str]) -> str:
     lines = [f'  name = "{name}";']
-    # golden-github makes codeowners required, so a repo that selects it and is
-    # not seeded here cannot generate at all.
+    # golden-github makes github.codeowners required, so a repo that selects it
+    # and is not seeded here cannot generate at all.
     if "golden-github" in packs:
-        lines.append('  codeowners = [ "@Fomiller" ];')
+        lines.append('  github.codeowners = [ "@Fomiller" ];')
     body = "\n".join(lines)
     return f"{{\n{body}\n}}\n"
 

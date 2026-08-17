@@ -49,7 +49,7 @@ mkGolden: repo.nix is not valid:
   required key 'language' is not set in repo.nix or any pack default
 ```
 
-`init` seeds `codeowners` when you select `golden-github`, because that one has
+`init` seeds `github.codeowners` when you select `golden-github`, because that one has
 no sensible default. The rest you add yourself — a guessed value for something
 like `infra.dopplerProject` would be worse than the error.
 

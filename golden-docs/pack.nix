@@ -4,11 +4,12 @@
   partials = ./partials;
   defaults = {
     docs = {
+      enabled = true;
       title = "";
       authors = [ ];
       theme = "frappe";
       repoUrl = "";
-      deploy = true;
+      publish = true;
     };
     gitignore = [ "docs/book/" ];
     just.recipes = [
@@ -24,6 +25,10 @@
     scaffold = [ "docs/src/SUMMARY.md" "docs/src/introduction.md" ];
     retired = [ ];
   };
+  # The pages are hand-written, so turning the pack off has to take them too.
+  retireTrees = [
+    { unless = "docs.enabled"; trees = [ "docs" ]; }
+  ];
   overrides = [ ];
   executable = [ ];
   schema = {
@@ -44,7 +49,11 @@
       type = "string";
       description = "Repo URL. When set, the book gets a source link and per-page edit links.";
     };
-    "docs.deploy" = {
+    "docs.enabled" = {
+      type = "bool";
+      description = "Whether this repo ships a book. False deletes docs/ and the workflow.";
+    };
+    "docs.publish" = {
       type = "bool";
       description = "Whether to write the workflow that publishes the book to GitHub Pages.";
     };

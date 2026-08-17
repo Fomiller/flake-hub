@@ -1,3 +1,4 @@
+{% if argocd.enabled %}
 {% include "_argocd_header.jinja" %}
 
 name: Publish image
@@ -17,9 +18,10 @@ jobs:
       contents: read
     with:
       repository: {{ name }}
-      role-to-assume: {{ argocd.roleToAssume }}
+      role-to-assume: {{ github.roleToAssume }}
       aws-region: {{ argocd.awsRegion }}
       platforms: {{ argocd.platforms | join(",") }}
       # A pull request builds the image and throws it away. Only main pushes.
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
     secrets: inherit
+{% endif %}

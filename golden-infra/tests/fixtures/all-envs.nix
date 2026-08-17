@@ -1,6 +1,6 @@
 {
   name = "infra-all";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   infra = {
     dopplerProject = "infra-all";
     ownerEmail = "forrestmillerj@gmail.com";

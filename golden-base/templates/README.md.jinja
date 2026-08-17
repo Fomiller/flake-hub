@@ -1,4 +1,6 @@
-# {{ name }}
+{# The short name if there is one: slug, else name with namePrefix removed. #}
+{% set short = slug or (name | replace(namePrefix, "", 1) if namePrefix else name) %}
+# {{ short }}
 
 {% if description %}{{ description }}
 

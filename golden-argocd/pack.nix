@@ -4,7 +4,8 @@
   partials = ./partials;
   defaults = {
     argocd = {
-      envs = [ "dev" ];
+      enabled = true;
+      environments = [ "dev" ];
       replicas = 1;
       chartVersion = "0.1.0";
       awsRegion = "us-east-1";
@@ -40,6 +41,11 @@
       "deploy/chart/templates/helpers.tpl"
     ];
   };
+  # helm/ and argocd/ are this pack's whole surface, and both hold files the
+  # repo edits, so turning the pack off has to take them wholesale.
+  retireTrees = [
+    { unless = "argocd.enabled"; trees = [ "argocd" "helm" ]; }
+  ];
   overrides = [ ];
   executable = [ ];
   schema = {
@@ -56,16 +62,15 @@
       required = true;
       description = "OCI registry host. Both the image and the chart sit at its root.";
     };
-    "argocd.roleToAssume" = {
-      type = "string";
-      required = true;
-      description = "IAM role the publish workflows assume over OIDC.";
-    };
     "argocd.awsRegion" = {
       type = "string";
       description = "Region the publish workflows log in to ECR against.";
     };
-    "argocd.envs" = {
+    "argocd.enabled" = {
+      type = "bool";
+      description = "Whether this repo ships a chart and overlays. False deletes argocd/ and helm/.";
+    };
+    "argocd.environments" = {
       type = "list";
       description = "Which environments get an overlay. Only dev, staging and prod exist.";
     };

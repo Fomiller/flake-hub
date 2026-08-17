@@ -1,6 +1,6 @@
 {
   name = "svc-named";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   language = "go";
   service.binary = "worker";
 }

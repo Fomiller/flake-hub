@@ -1,3 +1,4 @@
+{% if argocd.enabled %}
 {% include "_argocd_header.jinja" %}
 
 name: Publish chart
@@ -18,7 +19,8 @@ jobs:
       id-token: write
       contents: read
     with:
-      role-to-assume: {{ argocd.roleToAssume }}
+      role-to-assume: {{ github.roleToAssume }}
       aws-region: {{ argocd.awsRegion }}
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
     secrets: inherit
+{% endif %}

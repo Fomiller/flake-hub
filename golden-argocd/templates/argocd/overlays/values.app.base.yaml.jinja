@@ -1,3 +1,4 @@
+{% if argocd.enabled %}
 # Written once, then it is yours. `nix run .#generate` never touches it again.
 #
 # Shared chart values. Every overlay inflates the chart with this file first
@@ -10,3 +11,4 @@ replicas: {{ argocd.replicas }}
 
 image:
   repository: {{ argocd.registry }}/{{ name }}
+{% endif %}

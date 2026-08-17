@@ -26,7 +26,7 @@ in
   };
 
   testCodeownersIsRequired = {
-    expr = merged.schema."codeowners".required;
+    expr = merged.schema."github.codeowners".required;
     expected = true;
   };
 }

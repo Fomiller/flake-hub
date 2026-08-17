@@ -22,8 +22,27 @@
 
           golden = render ./tests/fixtures/repo.nix;
           minimal = render ./tests/fixtures/minimal.nix;
+          disabled = render ./tests/fixtures/disabled.nix;
         in
         {
+          # The vendored stylesheet is the trap here: it is a plain file copy,
+          # so without a gate it would be written straight back after reconcile
+          # deletes the tree.
+          checks.disabled-renders-nothing = pkgs.runCommand "docs-disabled-renders-nothing" { } ''
+            drv=${disabled.filesDrv}
+            found=$(find "$drv" -path "$drv/docs/*" -type f | wc -l)
+            if [ -e "$drv/.github/workflows/docs.yml" ]; then
+              found=$((found + 1))
+            fi
+            if [ "$found" -ne 0 ]; then
+              echo "docs.enabled = false still rendered $found file(s)" >&2
+              find "$drv" -path "$drv/docs/*" -type f >&2
+              exit 1
+            fi
+            grep -q '"retiredTrees":\["docs"\]' ${disabled.plan}
+            touch $out
+          '';
+
           # Building this is how you refresh the snapshot after a template
           # change: `nix build .#files-default` and diff against tests/expected.
           packages.files-default = golden.filesDrv;
@@ -75,9 +94,9 @@
 
           # Publishing is opt-out, so the gate is the only thing standing
           # between a private repo and a Pages deployment it never asked for.
-          checks.deploy-off-emits-no-workflow = pkgs.runCommand "deploy-off-emits-no-workflow" { } ''
+          checks.publish-off-emits-no-workflow = pkgs.runCommand "publish-off-emits-no-workflow" { } ''
             if [ -e ${minimal.filesDrv}/.github/workflows/docs.yml ]; then
-              echo "docs.deploy is false but docs.yml was still rendered" >&2
+              echo "docs.publish is false but docs.yml was still rendered" >&2
               exit 1
             fi
             touch $out

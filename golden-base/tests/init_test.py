@@ -31,7 +31,7 @@ def test_repo_nix_carries_the_name(tmp_path):
 
 def test_github_pack_seeds_codeowners(tmp_path):
     run(tmp_path, "--name", "foo", "--packs", "github")
-    assert 'codeowners = [ "@Fomiller" ];' in (tmp_path / "repo.nix").read_text()
+    assert 'github.codeowners = [ "@Fomiller" ];' in (tmp_path / "repo.nix").read_text()
 
 
 def test_codeowners_is_absent_without_the_github_pack(tmp_path):

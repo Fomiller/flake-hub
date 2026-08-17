@@ -1,3 +1,4 @@
+{% if just.enabled %}
 {% include "_base_header.jinja" %}
 
 import? 'just/base.just'
@@ -19,3 +20,4 @@ generate:
 {% else %}{{ recipe }}
 {% endif %}
 {% endfor %}
+{% endif %}

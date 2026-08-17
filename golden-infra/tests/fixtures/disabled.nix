@@ -1,6 +1,6 @@
 {
   name = "infra-off";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   infra = {
     enabled = false;
     dopplerProject = "unused";

@@ -17,10 +17,10 @@ to, so deleting a line changes nothing. Required keys need a real value.
 {
   argocd = {
     registry = "…";  # required, string
-    roleToAssume = "…";  # required, string
     awsRegion = "us-east-1";  # string, default
     chartVersion = "0.1.0";  # string, default
-    envs = [ "dev" ];  # list, default
+    enabled = true;  # bool, default
+    environments = [ "dev" ];  # list, default
     platforms = [ "linux/amd64" ];  # list, default
     replicas = 1;  # int, default
   };
@@ -36,11 +36,11 @@ to, so deleting a line changes nothing. Required keys need a real value.
 |---|---|---|---|---|
 | `argocd.awsRegion` | string | no | `"us-east-1"` | Region the publish workflows log in to ECR against. |
 | `argocd.chartVersion` | string | no | `"0.1.0"` | Chart version in Chart.yaml, and the version the overlays pull. |
-| `argocd.envs` | list | no | `[ "dev" ]` | Which environments get an overlay. Only dev, staging and prod exist. |
+| `argocd.enabled` | bool | no | `true` | Whether this repo ships a chart and overlays. False deletes argocd/ and helm/. |
+| `argocd.environments` | list | no | `[ "dev" ]` | Which environments get an overlay. Only dev, staging and prod exist. |
 | `argocd.platforms` | list | no | `[ "linux/amd64" ]` | Platforms the image is built for, passed to buildx. |
 | `argocd.registry` | string | yes | — | OCI registry host. Both the image and the chart sit at its root. |
 | `argocd.replicas` | int | no | `1` | Replica count in the shared overlay values, before per-environment overrides. |
-| `argocd.roleToAssume` | string | yes | — | IAM role the publish workflows assume over OIDC. |
 | `service.port` | int | yes | — | Port the chart's Service and Deployment expose. |
 
 ## Files
@@ -71,7 +71,7 @@ regenerated.
 Each overlay inflates the chart from OCI with the base values first and its own
 `values.app.yaml` second, so a per-environment file carries only what differs.
 
-`argocd.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
+`argocd.environments` picks which overlays exist. Only `dev`, `staging` and `prod` are
 supported, one static template each — the same constraint `golden-infra` has,
 because makejinja renders a static tree.
 

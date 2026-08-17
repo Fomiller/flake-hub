@@ -1,6 +1,6 @@
 {
   name = "infra-dev";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   # Nothing per environment, so dev renders on the pack defaults alone and the
   # bucket falls through to the derived name.
   infra = {

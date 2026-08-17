@@ -4,10 +4,15 @@
   partials = ./partials;
   defaults = {
     description = "";
+    namePrefix = "";
+    slug = "";
     # Packs concatenate list defaults, so a pack adds its build output here
     # rather than shipping its own .gitignore.
     gitignore = [ "result" "result-*" ".direnv/" ".DS_Store" ];
-    just.recipes = [ ];
+    just = {
+      enabled = true;
+      recipes = [ ];
+    };
     unmanaged = [ ];
   };
   registry = { };
@@ -25,6 +30,18 @@
       type = "string";
       required = true;
       description = "Repo name. Reaches the README, the chart directory, and the image repository.";
+    };
+    "namePrefix" = {
+      type = "string";
+      description = "Prefix stripped from name to get the slug. Only read when slug is empty.";
+    };
+    "slug" = {
+      type = "string";
+      description = "Short name for display. Empty means name with namePrefix removed.";
+    };
+    "just.enabled" = {
+      type = "bool";
+      description = "Whether to write the justfile. False leaves the repo with no recipes at all.";
     };
     "description" = {
       type = "string";

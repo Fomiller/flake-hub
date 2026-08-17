@@ -1,4 +1,4 @@
-{% if "staging" in argocd.envs %}{% include "_argocd_header.jinja" %}
+{% if argocd.enabled and "staging" in argocd.environments %}{% include "_argocd_header.jinja" %}
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
