@@ -6,4 +6,5 @@
   golden-service = "0.4.1";
   golden-infra = "0.2.1";
   golden-argocd = "0.4.1";
+  golden-docs = "0.1.0";
 }
