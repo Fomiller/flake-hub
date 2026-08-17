@@ -1,3 +1,4 @@
+{% if infra.enabled %}
 {% include "_infra_header.jinja" %}
 #
 # Root terragrunt config. Every unit includes this, so a unit's own
@@ -23,9 +24,7 @@ locals {
 
   state_bucket = coalesce(
     try(local.variable_vars.locals.bucket, null),
-{% if infra.stateBucket %}
-    "{{ infra.stateBucket }}",
-{% endif %}
+    try(local.account_vars.locals.state_bucket, null),
     "${local.service_vars.locals.namespace}-${local.environment}-terraform-state"
   )
 
@@ -131,3 +130,4 @@ generate "variables" {
     }
   EOF
 }
+{% endif %}

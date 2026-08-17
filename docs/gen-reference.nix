@@ -5,9 +5,14 @@ let
     let
       e = pack.schema.${key};
       values = lib.optionalString (e ? values)
-        " (${lib.concatStringsSep ", " (map (v: "`${v}`") e.values)})";
+        " (${lib.concatStringsSep ", " (map (v: "`${v}`") e.values)})"
+      + lib.optionalString (e ? keys)
+        " (${lib.concatStringsSep ", " (map (v: "`${v}`") e.keys)})";
       default = lib.attrByPath (lib.splitString "." key) null pack.defaults;
-      defaultCell = if default == null then "—" else "`${fmt default}`";
+      # An attrsOf default is every block at once. The per-field rows below
+      # carry the values; dumping the whole thing here reads as noise.
+      defaultCell =
+        if e.type == "attrsOf" || default == null then "—" else "`${fmt default}`";
       # A key nobody can explain is a key nobody should ship. Failing here is
       # cheaper than a reference table with a blank column.
       description = e.description or
@@ -15,13 +20,36 @@ let
     in
     "| `${key}` | ${e.type}${values} | ${if e.required or false then "yes" else "no"} | ${defaultCell} | ${description} |";
 
+  # An attrsOf key is one block shape repeated under names, so its fields get
+  # their own rows rather than a JSON blob in the Default column.
+  fieldRows = key:
+    let
+      e = pack.schema.${key};
+      blocks = lib.attrByPath (lib.splitString "." key) { } pack.defaults;
+      # Every block carries the same fields, so any one of them shows the
+      # default. Picking the first keeps the table one row per field.
+      sample = if blocks == { } then { } else blocks.${builtins.head (builtins.attrNames blocks)};
+      fieldRow = f:
+        let
+          fe = e.fields.${f};
+          default = sample.${f} or null;
+          description = fe.description or
+            (throw "gen-reference: ${pack.name} schema key '${key}.<name>.${f}' has no description");
+        in
+        "| `${key}.<name>.${f}` | ${fe.type} | no | ${if default == null then "—" else "`${fmt default}`"} | ${description} |";
+    in
+    map fieldRow (builtins.attrNames e.fields);
+
+  rowsFor = key:
+    [ (row key) ] ++ lib.optionals (pack.schema.${key}.type == "attrsOf") (fieldRows key);
+
   schemaTable =
     if pack.schema == { } then "This pack takes no configuration."
     else
       lib.concatStringsSep "\n" ([
         "| Key | Type | Required | Default | Description |"
         "|---|---|---|---|---|"
-      ] ++ map row (builtins.attrNames pack.schema));
+      ] ++ lib.concatMap rowsFor (builtins.attrNames pack.schema));
 
   fileList = cls:
     let paths = pack.ownership.${cls}; in
@@ -71,9 +99,36 @@ let
     in
     "${indent}${name} = ${value};  # ${note}";
 
+  # One representative block, so the example reads like a repo.nix instead of
+  # a JSON dump of every environment.
+  block = indent: name: key:
+    let
+      e = pack.schema.${key};
+      blocks = lib.attrByPath (lib.splitString "." key) { } pack.defaults;
+      names = builtins.attrNames blocks;
+      sampleName = if names == [ ] then "<name>" else builtins.head names;
+      sample = blocks.${sampleName} or { };
+      field = f:
+        let
+          value = if sample ? ${f} then fmt sample.${f} else placeholder e.fields.${f};
+        in
+        "${indent}    ${f} = ${value};  # ${e.fields.${f}.type}";
+      allowed = lib.optionalString (e ? keys) "  # one of: ${lib.concatStringsSep ", " e.keys}";
+    in
+    lib.concatStringsSep "\n" ([
+      "${indent}${name} = {${allowed}"
+      "${indent}  ${sampleName} = {"
+    ] ++ map field (builtins.attrNames e.fields) ++ [
+      "${indent}  };"
+      "${indent}};"
+    ]);
+
   entry = indent: name: node:
     if node ? __key
-    then leaf indent name node.__key
+    then
+      (if pack.schema.${node.__key}.type == "attrsOf"
+      then block indent name node.__key
+      else leaf indent name node.__key)
     else "${indent}${name} = {\n${attrs (indent + "  ") node}\n${indent}};";
 
   hasRequired = node:

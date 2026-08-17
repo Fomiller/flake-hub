@@ -1,3 +1,4 @@
+{% if infra.enabled %}
 {% include "_infra_header.jinja" %}
 
 name: Terragrunt Deploy - Infra
@@ -18,7 +19,7 @@ on:
       - just/terraform.just
 
 jobs:
-{% for env in infra.envs %}
+{% for env, e in infra.environments.items() if e.enabled %}
   plan-{{ env }}:
     name: Plan Infra ({{ env }})
     if: {% raw %}${{ github.event_name == 'pull_request' }}{% endraw +%}
@@ -30,6 +31,7 @@ jobs:
       environment: {{ env }}
       infra-dir: infra/live/{{ env }}
       doppler-project: {{ infra.dopplerProject }}
+      aws-default-region: {{ e.region }}
       tg-plan: true
       use-oidc: true
     secrets: inherit
@@ -45,6 +47,8 @@ jobs:
       environment: {{ env }}
       infra-dir: infra/live/{{ env }}
       doppler-project: {{ infra.dopplerProject }}
+      aws-default-region: {{ e.region }}
       use-oidc: true
     secrets: inherit
 {% endfor %}
+{% endif %}

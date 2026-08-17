@@ -2,7 +2,7 @@
 
 The prod environment. Three files live here and nothing else:
 
-- `account.hcl` — the environment name and region
+- `account.hcl` — the environment name, region and account
 - `terragrunt.stack.hcl` — which stacks this environment gets
 - this README
 

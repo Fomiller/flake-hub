@@ -42,12 +42,19 @@ generated unit directory in git is a copy that goes stale.
 | --- | --- | --- | --- |
 | `infra.dopplerProject` | string | yes | — |
 | `infra.ownerEmail` | string | yes | — |
-| `infra.stateBucket` | string | no | `""` |
-| `infra.envs` | list | no | `[ "dev" ]` |
-| `infra.awsRegion` | string | no | `us-east-1` |
+| `infra.enabled` | bool | no | `true` |
 | `infra.namespace` | string | no | `fomiller` |
 | `infra.terraformVersion` | string | no | `>=1.11.0` |
 | `infra.awsProviderVersion` | string | no | `>=5.0.0` |
+| `infra.environments.<env>` | attrsOf | no | dev on, staging and prod off |
+
+`<env>` is `dev`, `staging` or `prod`, and each block takes `enabled`,
+`account`, `region`, `rolePrefix`, `profile` and `stateBucket`. Anything not
+set falls back to the pack default, so an environment usually needs one or two
+lines. The values land in that environment's `account.hcl`.
+
+`infra.enabled = false` retires `infra/` wholesale — hand-written units and
+stacks included — and drops the deploy workflow.
 
 ## variables.hcl
 
@@ -58,9 +65,9 @@ reads it — inside a nested `read_terragrunt_config`, `find_in_parent_folders`
 starts above that file's own directory, so `tags.hcl` cannot see a sibling
 `variables.hcl`.
 
-Bucket order: `variables.hcl`, `infra.stateBucket`, then a derived
-`<namespace>-<env>-terraform-state`. Email order: `variables.hcl`, then
-`infra.ownerEmail`.
+Bucket order: `variables.hcl`, the environment's `stateBucket` (carried by
+`account.hcl`), then a derived `<namespace>-<env>-terraform-state`. Email
+order: `variables.hcl`, then `infra.ownerEmail`.
 
 ## The state key
 
@@ -81,6 +88,8 @@ Only `aws` ships in the table. Adding a provider is adding an entry.
 
 makejinja renders a static tree, so a variable number of directories has to come
 from a fixed set of gated templates. `dev`, `staging` and `prod` each have their
-own template, gated on membership in `infra.envs`. An unselected environment
+own template, gated on `infra.environments.<env>.enabled`. The schema fixes the
+allowed names, so a typo is an error rather than a block nothing reads. An
+unselected environment
 renders empty and is never copied out. A fourth environment means a fourth
 template.

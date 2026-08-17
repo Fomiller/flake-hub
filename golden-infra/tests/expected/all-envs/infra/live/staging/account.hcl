@@ -6,5 +6,7 @@
 
 locals {
   environment = "staging"
-  region      = "us-east-1"
+  region      = "us-west-2"
+  # Overrides the name root.hcl would derive. variables.hcl still wins.
+  state_bucket = "fomiller-tfstate-staging"
 }

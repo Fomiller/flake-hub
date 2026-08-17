@@ -19,10 +19,18 @@ to, so deleting a line changes nothing. Required keys need a real value.
     dopplerProject = "…";  # required, string
     ownerEmail = "…";  # required, string
     awsProviderVersion = ">=5.0.0";  # string, default
-    awsRegion = "us-east-1";  # string, default
-    envs = [ "dev" ];  # list, default
+    enabled = true;  # bool, default
+    environments = {  # one of: dev, staging, prod
+      dev = {
+        account = "";  # string
+        enabled = true;  # bool
+        profile = "";  # string
+        region = "us-east-1";  # string
+        rolePrefix = "";  # string
+        stateBucket = "";  # string
+      };
+    };
     namespace = "fomiller";  # string, default
-    stateBucket = "";  # string, default
     terraformVersion = ">=1.11.0";  # string, default
   };
 }
@@ -33,12 +41,17 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `infra.awsProviderVersion` | string | no | `">=5.0.0"` | Version constraint written to the generated aws provider block. |
-| `infra.awsRegion` | string | no | `"us-east-1"` | Region for the AWS provider and the state backend. |
 | `infra.dopplerProject` | string | yes | — | Doppler project the deploy workflow pulls secrets from. |
-| `infra.envs` | list | no | `[ "dev" ]` | Which environments get a directory under infra/live/. Only dev, staging and prod exist. |
+| `infra.enabled` | bool | no | `true` | Whether this repo manages infrastructure. False deletes infra/ and the deploy workflow. |
+| `infra.environments` | attrsOf (`dev`, `staging`, `prod`) | no | — | Per-environment settings. An environment exists under infra/live/ only while its enabled is true. |
+| `infra.environments.<name>.account` | string | no | `""` | AWS account ID, written to account.hcl for the units to read. |
+| `infra.environments.<name>.enabled` | bool | no | `true` | Whether this environment gets a directory under infra/live/. |
+| `infra.environments.<name>.profile` | string | no | `""` | Local AWS profile name, for running terragrunt by hand. |
+| `infra.environments.<name>.region` | string | no | `"us-east-1"` | Region for the AWS provider, the state backend and the deploy job. |
+| `infra.environments.<name>.rolePrefix` | string | no | `""` | Role-name base the units build their OIDC ARNs from. |
+| `infra.environments.<name>.stateBucket` | string | no | `""` | Overrides the derived <namespace>-<env>-terraform-state. infra/live/variables.hcl still wins. |
 | `infra.namespace` | string | no | `"fomiller"` | Prefix on resource names, so two repos in one account do not collide. |
 | `infra.ownerEmail` | string | yes | — | Goes on every resource as an owner tag. infra/live/variables.hcl can override it per tree. |
-| `infra.stateBucket` | string | no | `""` | S3 bucket holding terraform state. Left empty, root.hcl derives <namespace>-<env>-terraform-state. infra/live/variables.hcl overrides either. |
 | `infra.terraformVersion` | string | no | `">=1.11.0"` | Version constraint written to the generated required_version. |
 
 ## Files
@@ -87,15 +100,49 @@ locals {
 The file is optional, is never generated, and may set one key or both. Nearest
 file wins.
 
-Order for the bucket: `variables.hcl`, then `infra.stateBucket` from
-`repo.nix`, then a derived `<namespace>-<env>-terraform-state`. Order for the
-email: `variables.hcl`, then `infra.ownerEmail`.
+Order for the bucket: `variables.hcl`, then the environment's `stateBucket`
+(which `account.hcl` carries), then a derived
+`<namespace>-<env>-terraform-state`. Order for the email: `variables.hcl`, then
+`infra.ownerEmail`.
 
 Both overrides are resolved in `root.hcl`, not in `tags.hcl`. Inside a config
 that terragrunt reads through `read_terragrunt_config`, `find_in_parent_folders`
 starts above that file's own directory, so a `variables.hcl` sitting beside
 `tags.hcl` would never be found.
 
-Three environments are supported: `dev`, `staging` and `prod`. Each is a
-separate template gated on membership in `infra.envs`, because makejinja renders
-a static tree. A fourth environment means a fourth template in this pack.
+## Environments
+
+Three are supported: `dev`, `staging` and `prod`. Each is a separate template
+gated on `infra.environments.<env>.enabled`, because makejinja renders a static
+tree. A fourth environment means a fourth template in this pack, which is why
+the schema fixes the allowed names — a typo is an error, not a silently ignored
+block.
+
+An environment only has to name what it changes. Everything else comes from the
+pack default, so this is a complete `repo.nix` for two environments:
+
+```nix
+infra = {
+  dopplerProject = "my-service";
+  ownerEmail = "forrestmillerj@gmail.com";
+  environments = {
+    dev.account = "111122223333";
+    prod = {
+      enabled = true;
+      account = "444455556666";
+      region = "us-west-2";
+    };
+  };
+};
+```
+
+`account`, `region`, `profile`, `rolePrefix` and `stateBucket` land in that
+environment's `account.hcl`, which is what `root.hcl` and the units read. An
+empty one is left out of the file rather than written blank.
+
+## Turning the pack off
+
+`infra.enabled = false` deletes `infra/` outright — units, stacks and all — and
+removes the deploy workflow. That is a retired tree, not a gated file: it takes
+hand-written code with it. The `plan` and `apply` recipes stay in the justfile,
+since pack defaults are static.
