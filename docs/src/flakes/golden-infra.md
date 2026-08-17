@@ -10,8 +10,8 @@ golden-infra.url = "github:Fomiller/flake-hub?dir=golden-infra&ref=refs/tags/gol
 <!-- BEGIN GENERATED REFERENCE -->
 ## repo.nix
 
-Every knob this pack adds. Required keys are filled in; optional ones are
-commented out beside the default they fall back to.
+Every knob this pack adds. Optional keys show the default they fall back
+to, so deleting a line changes nothing. Required keys need a real value.
 
 ```nix
 {
@@ -19,12 +19,12 @@ commented out beside the default they fall back to.
     dopplerProject = "…";  # required, string
     ownerEmail = "…";  # required, string
     stateBucket = "…";  # required, string
-    # awsProviderVersion = ">=5.0.0";  # string, default
-    # awsRegion = "us-east-1";  # string, default
-    # envs = [ "dev" ];  # list, default
-    # namespace = "fomiller";  # string, default
-    # tailscale = true;  # bool, default
-    # terraformVersion = ">=1.11.0";  # string, default
+    awsProviderVersion = ">=5.0.0";  # string, default
+    awsRegion = "us-east-1";  # string, default
+    envs = [ "dev" ];  # list, default
+    namespace = "fomiller";  # string, default
+    tailscale = true;  # bool, default
+    terraformVersion = ">=1.11.0";  # string, default
   };
 }
 ```

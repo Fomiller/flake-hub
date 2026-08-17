@@ -10,19 +10,19 @@ golden-argocd.url = "github:Fomiller/flake-hub?dir=golden-argocd&ref=refs/tags/g
 <!-- BEGIN GENERATED REFERENCE -->
 ## repo.nix
 
-Every knob this pack adds. Required keys are filled in; optional ones are
-commented out beside the default they fall back to.
+Every knob this pack adds. Optional keys show the default they fall back
+to, so deleting a line changes nothing. Required keys need a real value.
 
 ```nix
 {
   argocd = {
     registry = "…";  # required, string
     roleToAssume = "…";  # required, string
-    # awsRegion = "us-east-1";  # string, default
-    # chartVersion = "0.1.0";  # string, default
-    # envs = [ "dev" ];  # list, default
-    # platforms = [ "linux/amd64" ];  # list, default
-    # replicas = 1;  # int, default
+    awsRegion = "us-east-1";  # string, default
+    chartVersion = "0.1.0";  # string, default
+    envs = [ "dev" ];  # list, default
+    platforms = [ "linux/amd64" ];  # list, default
+    replicas = 1;  # int, default
   };
   service = {
     port = 0;  # required, int
