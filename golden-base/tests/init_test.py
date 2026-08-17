@@ -53,13 +53,11 @@ def test_extra_packs_are_added_as_inputs(tmp_path):
     assert "golden-service.url" in flake
 
 
-def test_pack_inputs_follow_the_consumers_engine_and_nixpkgs(tmp_path):
+def test_a_pack_input_is_one_line(tmp_path):
     run(tmp_path, "--name", "foo", "--packs", "github")
     flake = (tmp_path / "flake.nix").read_text()
-    for pack in ("golden-base", "golden-github"):
-        assert f'{pack}.inputs.nixpkgs.follows = "nixpkgs";' in flake
-        assert f'{pack}.inputs.golden-engine.follows = "golden-engine";' in flake
-    assert "golden-engine.inputs." not in flake
+    assert ".follows" not in flake
+    assert ".inputs." not in flake
 
 
 def test_commented_out_pack_is_not_a_known_pack(tmp_path):
