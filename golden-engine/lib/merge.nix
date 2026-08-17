@@ -72,6 +72,8 @@ in
       registry = lib.foldl' lib.recursiveUpdate { } (map (p: p.registry) packList);
       schema = lib.foldl' lib.recursiveUpdate { } (map (p: p.schema) packList);
       executable = lib.concatMap (p: p.executable) packList;
+      # `or [ ]`: a pack that gates nothing does not have to carry the field.
+      retireTrees = lib.concatMap (p: p.retireTrees or [ ]) packList;
       ownership = {
         managed = lib.concatMap (p: p.ownership.managed) packList;
         scaffold = lib.concatMap (p: p.ownership.scaffold) packList;

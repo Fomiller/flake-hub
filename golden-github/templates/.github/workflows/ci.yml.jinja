@@ -1,4 +1,4 @@
-{% if ci.jobs %}{% include "_github_header.jinja" %}
+{% if ci.jobs and github.buildAndTest %}{% include "_github_header.jinja" %}
 
 name: CI
 

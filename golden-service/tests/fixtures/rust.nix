@@ -1,5 +1,5 @@
 {
   name = "svc-rust";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   language = "rust";
 }

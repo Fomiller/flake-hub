@@ -1,0 +1,22 @@
+{% set e = infra.environments[env] %}
+{% if infra.enabled and e.enabled %}
+{% include "_infra_header.jinja" %}
+
+locals {
+  environment = "{{ env }}"
+  region      = "{{ e.region }}"
+{% if e.account %}
+  account_id  = "{{ e.account }}"
+{% endif %}
+{% if e.profile %}
+  profile     = "{{ e.profile }}"
+{% endif %}
+{% if e.rolePrefix %}
+  role_prefix = "{{ e.rolePrefix }}"
+{% endif %}
+{% if e.stateBucket %}
+  # Overrides the name root.hcl would derive. variables.hcl still wins.
+  state_bucket = "{{ e.stateBucket }}"
+{% endif %}
+}
+{% endif %}

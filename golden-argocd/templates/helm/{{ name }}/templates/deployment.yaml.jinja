@@ -1,3 +1,4 @@
+{% if argocd.enabled %}
 {# Helm and Jinja share {{ }}. Everything Helm must see verbatim stays inside
    raw; only the build-time values step outside it. #}
 {% raw %}{{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
@@ -20,3 +21,4 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: {% endraw %}{{ service.port }}
+{% endif %}

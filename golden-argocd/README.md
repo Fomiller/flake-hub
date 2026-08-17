@@ -28,9 +28,9 @@ repo that grows a second chart puts it beside the first under `helm/`.
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
 | `argocd.registry` | string | yes | — |
-| `argocd.roleToAssume` | string | yes | — |
 | `argocd.awsRegion` | string | no | `us-east-1` |
-| `argocd.envs` | list | no | `[ "dev" ]` |
+| `argocd.enabled` | bool | no | `true` |
+| `argocd.environments` | list | no | `[ "dev" ]` |
 | `argocd.replicas` | int | no | `1` |
 | `argocd.chartVersion` | string | no | `0.1.0` |
 | `argocd.platforms` | list | no | `[ "linux/amd64" ]` |
@@ -49,7 +49,7 @@ check that keeps the chart name and the overlays in step.
 Neither repository is created by this pack. Terraform owns them — see
 `golden-infra`.
 
-`argocd.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
+`argocd.environments` picks which overlays exist. Only `dev`, `staging` and `prod` are
 supported, one static template each, for the same reason `golden-infra` works
 that way: makejinja renders a static tree.
 

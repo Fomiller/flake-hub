@@ -7,4 +7,6 @@
 locals {
   environment = "dev"
   region      = "us-east-1"
+  account_id  = "111122223333"
+  profile     = "fomiller-dev"
 }

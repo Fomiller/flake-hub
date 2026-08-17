@@ -7,4 +7,6 @@
 locals {
   environment = "prod"
   region      = "us-east-1"
+  account_id  = "444455556666"
+  role_prefix = "fomiller-prod"
 }

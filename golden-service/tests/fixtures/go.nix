@@ -1,5 +1,5 @@
 {
   name = "svc-go";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   language = "go";
 }

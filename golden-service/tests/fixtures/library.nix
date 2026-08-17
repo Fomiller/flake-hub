@@ -1,6 +1,6 @@
 {
   name = "lib-go";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   language = "go";
   service.container = false;
 }

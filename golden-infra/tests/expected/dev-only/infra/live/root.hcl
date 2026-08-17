@@ -27,6 +27,7 @@ locals {
 
   state_bucket = coalesce(
     try(local.variable_vars.locals.bucket, null),
+    try(local.account_vars.locals.state_bucket, null),
     "${local.service_vars.locals.namespace}-${local.environment}-terraform-state"
   )
 

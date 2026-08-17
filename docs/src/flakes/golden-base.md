@@ -19,8 +19,11 @@ to, so deleting a line changes nothing. Required keys need a real value.
   description = "";  # string, default
   gitignore = [ "result" "result-*" ".direnv/" ".DS_Store" ];  # list, default
   just = {
+    enabled = true;  # bool, default
     recipes = [ ];  # list, default
   };
+  namePrefix = "";  # string, default
+  slug = "";  # string, default
   unmanaged = [ ];  # list, default
 }
 ```
@@ -31,8 +34,11 @@ to, so deleting a line changes nothing. Required keys need a real value.
 |---|---|---|---|---|
 | `description` | string | no | `""` | One line about the repo. Shown in the generated README. |
 | `gitignore` | list | no | `[ "result" "result-*" ".direnv/" ".DS_Store" ]` | Lines written to .gitignore, one per entry. Packs append to this. |
+| `just.enabled` | bool | no | `true` | Whether to write the justfile. False leaves the repo with no recipes at all. |
 | `just.recipes` | list | no | `[ ]` | Recipes written to the justfile. Packs append to this. |
 | `name` | string | yes | — | Repo name. Reaches the README, the chart directory, and the image repository. |
+| `namePrefix` | string | no | `""` | Prefix stripped from name to get the slug. Only read when slug is empty. |
+| `slug` | string | no | `""` | Short name for display. Empty means name with namePrefix removed. |
 | `unmanaged` | list | no | `[ ]` | Paths the engine leaves alone even though a pack owns them. |
 
 ## Files

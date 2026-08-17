@@ -23,7 +23,7 @@ deploys it.
 
 The overlays are worth a look. Each one inflates the chart from OCI with a
 shared values file plus its own, so dev runs one replica while the shared base
-asks for two. Only `dev` is on: `argocd.envs` decides which overlays exist, and
+asks for two. Only `dev` is on: `argocd.environments` decides which overlays exist, and
 prod is off by default.
 
 The two ECR repositories are worth a look too. `flake-hub-example-service`

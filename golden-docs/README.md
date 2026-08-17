@@ -24,7 +24,7 @@ the justfile.
 | `docs.authors` | list | no | `[ ]` |
 | `docs.theme` | enum | no | `frappe` |
 | `docs.repoUrl` | string | no | `""` |
-| `docs.deploy` | bool | no | `true` |
+| `docs.publish` | bool | no | `true` |
 
 ## The theme
 
@@ -54,7 +54,7 @@ something under `docs/` or the workflow itself changed. The repo still needs
 Pages turned on with GitHub Actions as the source — that is a repo setting, not
 a file, so the pack cannot do it.
 
-Set `docs.deploy = false` for a book you want to build locally but not publish.
+Set `docs.publish = false` for a book you want to build locally but not publish.
 The workflow is then not written at all, and a repo that already has it gets it
 removed.
 

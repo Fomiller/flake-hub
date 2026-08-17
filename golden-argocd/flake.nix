@@ -32,9 +32,34 @@
             }
             pkgs
             (builtins.removeAttrs (import ./tests/fixtures/svc.nix) [ "language" ]);
+          disabled = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack golden-github.pack golden-service.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/disabled.nix);
         in
         {
           packages.files = golden.filesDrv;
+
+          # reconcile deletes argocd/ and helm/ before it writes managed files,
+          # so a template that still rendered would put the tree straight back.
+          checks.disabled-renders-nothing = pkgs.runCommand "argocd-disabled-renders-nothing" { } ''
+            drv=${disabled.filesDrv}
+            found=$(find "$drv" \( -path "$drv/argocd/*" -o -path "$drv/helm/*" \) -type f | wc -l)
+            for f in .github/workflows/publish-chart.yml .github/workflows/publish-image.yml; do
+              if [ -e "$drv/$f" ]; then
+                found=$((found + 1))
+              fi
+            done
+            if [ "$found" -ne 0 ]; then
+              echo "argocd.enabled = false still rendered $found file(s)" >&2
+              find "$drv" \( -path "$drv/argocd/*" -o -path "$drv/helm/*" \) -type f >&2
+              exit 1
+            fi
+            grep -q '"retiredTrees":\["argocd","helm"\]' ${disabled.plan}
+            touch $out
+          '';
 
           checks.render-svc = pkgs.runCommand "render-svc" { } ''
             # The loop only visits files the expected tree already has, so an
@@ -130,7 +155,7 @@
           # An overlay for an unselected environment must not land at all.
           checks.unselected-env-has-no-overlay = pkgs.runCommand "unselected-env-has-no-overlay" { } ''
             if [ -e ${golden.filesDrv}/argocd/overlays/staging ]; then
-              echo "staging is not in argocd.envs but its overlay was rendered" >&2
+              echo "staging is not in argocd.environments but its overlay was rendered" >&2
               exit 1
             fi
             touch $out

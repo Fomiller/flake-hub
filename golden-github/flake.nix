@@ -31,6 +31,12 @@
             }
             pkgs
             (import ./tests/fixtures/empty-owners.nix);
+          gatesOff = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/gates-off.nix);
           evalUnits = pkgs.writeText "eval_units.nix" ''
             import ${./tests/eval_units.nix} {
               pkgs = import ${nixpkgs} { system = "${system}"; };
@@ -66,8 +72,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/default} && find . -type f | wc -l)
-            if [ "$found" -ne 3 ]; then
-              echo "expected tree holds $found files, not 3" >&2
+            if [ "$found" -ne 4 ]; then
+              echo "expected tree holds $found files, not 4" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/default} && find . -type f | sed 's|^\./||'); do
@@ -116,6 +122,21 @@
               echo "codeowners is empty but CODEOWNERS still carries a rule" >&2
               exit 1
             fi
+            touch $out
+          '';
+
+          # Each gate has to remove its own file and nothing else, so the same
+          # fixture proves all three at once.
+          checks.gates-off-remove-their-files = pkgs.runCommand "gates-off-remove-their-files" { } ''
+            for f in renovate.json AGENTS.md .github/workflows/ci.yml; do
+              if [ -e ${gatesOff.filesDrv}/$f ]; then
+                echo "$f was rendered with its gate off" >&2
+                exit 1
+              fi
+            done
+            # CODEOWNERS has no gate, so it is the control: the fixture is not
+            # simply rendering nothing.
+            test -e ${gatesOff.filesDrv}/.github/CODEOWNERS
             touch $out
           '';
 

@@ -33,6 +33,7 @@ jobs:
       environment: dev
       infra-dir: infra/live/dev
       doppler-project: infra-dev
+      aws-default-region: us-east-1
       tg-plan: true
       use-oidc: true
     secrets: inherit
@@ -48,5 +49,6 @@ jobs:
       environment: dev
       infra-dir: infra/live/dev
       doppler-project: infra-dev
+      aws-default-region: us-east-1
       use-oidc: true
     secrets: inherit

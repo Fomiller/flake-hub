@@ -1,3 +1,4 @@
+{% if infra.enabled %}
 {% include "_infra_header.jinja" %}
 
 locals {
@@ -5,3 +6,4 @@ locals {
   app_prefix = "{{ name }}"
   namespace  = "{{ infra.namespace }}"
 }
+{% endif %}

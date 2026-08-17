@@ -1,3 +1,4 @@
+{% if argocd.enabled %}
 {% raw %}{{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
 apiVersion: v1
 kind: Service
@@ -9,3 +10,4 @@ spec:
   ports:
     - port: {% endraw %}{{ service.port }}
       targetPort: {{ service.port }}
+{% endif %}

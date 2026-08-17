@@ -17,7 +17,8 @@ to, so deleting a line changes nothing. Required keys need a real value.
 {
   docs = {
     authors = [ ];  # list, default
-    deploy = true;  # bool, default
+    enabled = true;  # bool, default
+    publish = true;  # bool, default
     repoUrl = "";  # string, default
     theme = "frappe";  # enum: latte | frappe | macchiato | mocha, default
     title = "";  # string, default
@@ -30,7 +31,8 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `docs.authors` | list | no | `[ ]` | Names written to book.toml's authors list. |
-| `docs.deploy` | bool | no | `true` | Whether to write the workflow that publishes the book to GitHub Pages. |
+| `docs.enabled` | bool | no | `true` | Whether this repo ships a book. False deletes docs/ and the workflow. |
+| `docs.publish` | bool | no | `true` | Whether to write the workflow that publishes the book to GitHub Pages. |
 | `docs.repoUrl` | string | no | `""` | Repo URL. When set, the book gets a source link and per-page edit links. |
 | `docs.theme` | enum (`latte`, `frappe`, `macchiato`, `mocha`) | no | `"frappe"` | Catppuccin flavour the book is themed with. |
 | `docs.title` | string | no | `""` | Book title. Falls back to the repo name when empty. |
@@ -62,7 +64,7 @@ push to main, and only when something under `docs/` or the workflow itself
 changed. The repo still needs Pages turned on with GitHub Actions as the source
 — that is a repo setting, not a file, so the pack cannot do it.
 
-`docs.deploy = false` drops the workflow entirely, for a book you want to build
+`docs.publish = false` drops the workflow entirely, for a book you want to build
 locally but not publish. A repo that already has the workflow gets it removed.
 
 `docs.repoUrl` fills in `git-repository-url` and `edit-url-template`, which give

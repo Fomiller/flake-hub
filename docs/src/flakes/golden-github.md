@@ -15,7 +15,13 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ```nix
 {
-  codeowners = [ ];  # required, list
+  github = {
+    codeowners = [ ];  # required, list
+    agents = true;  # bool, default
+    buildAndTest = true;  # bool, default
+    renovate = true;  # bool, default
+    roleToAssume = "";  # string, default
+  };
   ci = {
     extraSteps = {
       post = [ ];  # list, default
@@ -33,14 +39,18 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | `ci.extraSteps.post` | list | no | `[ ]` | Steps run after every CI job's own steps. |
 | `ci.extraSteps.pre` | list | no | `[ ]` | Steps run before every CI job's own steps. |
 | `ci.jobs` | list | no | `[ ]` | Jobs added to ci.yml. Packs append to this. |
-| `codeowners` | list | yes | — | GitHub handles or teams that own every path. Written to .github/CODEOWNERS. |
+| `github.agents` | bool | no | `true` | Whether to seed AGENTS.md. It is written once; turning this off later leaves the file alone. |
+| `github.buildAndTest` | bool | no | `true` | Whether to write ci.yml. False leaves the repo with no build or test workflow. |
+| `github.codeowners` | list | yes | — | GitHub handles or teams that own every path. Written to .github/CODEOWNERS. |
+| `github.renovate` | bool | no | `true` | Whether to write renovate.json. |
+| `github.roleToAssume` | string | no | `""` | IAM role ARN the publish workflows assume through OIDC. |
 
 ## Files
 
 | Class | Paths |
 |---|---|
 | managed | `.github/CODEOWNERS`, `renovate.json`, `.github/workflows/generate.yml`, `.github/workflows/ci.yml` |
-| scaffold | _none_ |
+| scaffold | `AGENTS.md` |
 | retired | `CODEOWNERS` |
 <!-- END GENERATED REFERENCE -->
 

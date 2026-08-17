@@ -64,6 +64,55 @@ running the other.
 | `retired`   | Deleted, if present.                                          |
 | `unmanaged` | Never touched. Declared per-repo in `repo.nix`, not per-pack.  |
 
+## Retiring a whole tree
+
+A pack can declare that a directory stops belonging to the repo when a config
+key is off:
+
+```nix
+retireTrees = [
+  { unless = "argocd.enabled"; trees = [ "argocd" "helm" ]; }
+];
+```
+
+`unless` is a dotted key that must resolve to a bool in the merged config.
+When it is `false`, every listed directory is deleted recursively — hand-written
+files included. That is the difference from a `managed` file rendering empty,
+which only removes the generated file.
+
+It is data rather than a function because `pack.nix` is imported with no
+arguments. The gate is evaluated in `plan.nix`, which emits `retiredTrees` in
+the plan; `reconcile.py` removes them before writing anything, same as
+`retired`.
+
+Guards: the gate must exist and be a bool, a tree must be a plain relative
+directory (no glob, no `..`), and a repo cannot declare something `unmanaged`
+underneath a tree that is being deleted.
+
+## Schema types
+
+`string`, `bool`, `int`, `list`, `attrs`, `enum` (with `values`), and
+`attrsOf`.
+
+`attrsOf` is one block shape repeated under names, which is what
+`infra.environments` and `argocd.slack` need:
+
+```nix
+"infra.environments" = {
+  type = "attrsOf";
+  keys = [ "dev" "staging" "prod" ];   # optional; omit to allow any name
+  fields = {
+    enabled = { type = "bool"; description = "..."; };
+    account = { type = "string"; description = "..."; };
+  };
+  description = "...";
+};
+```
+
+Every block is checked against `fields` — an unknown field or a wrong type is
+named with its full dotted path. With `keys` set, a name outside the list is an
+error, which is how a typo'd environment gets caught.
+
 ## Templated paths
 
 A template path may carry `{{ key }}` components, for any top-level string in

@@ -1,5 +1,7 @@
+{% if docs.enabled %}
 # {{ docs.title or name }}
 {% if description %}
 
 {{ description }}
+{% endif %}
 {% endif %}

@@ -6,7 +6,7 @@ let
   flatten = schema: prefix: value:
     let
       isLeafAttrs = prefix != "" && builtins.isAttrs value
-        && (value == { } || ((schema.${prefix}.type or null) == "attrs"));
+        && (value == { } || builtins.elem (schema.${prefix}.type or null) [ "attrs" "attrsOf" ]);
     in
     if builtins.isAttrs value && !isLeafAttrs
     then
@@ -22,8 +22,32 @@ let
     else if entry.type == "int" then builtins.isInt value
     else if entry.type == "list" then builtins.isList value
     else if entry.type == "attrs" then builtins.isAttrs value
+    else if entry.type == "attrsOf" then builtins.isAttrs value
     else if entry.type == "enum" then builtins.elem value entry.values
     else throw "mkGolden: schema for '${key}' has unknown type '${entry.type}'";
+
+  # attrsOf is one block shape repeated under names the repo picks: every
+  # value is checked against `fields`, and `keys` (when set) fixes the names.
+  blockErrors = key: entry: value:
+    let
+      names = builtins.attrNames value;
+      badName = map (n: "'${key}.${n}' in repo.nix is not a known ${key} name (expected ${lib.concatStringsSep ", " entry.keys})")
+        (if entry ? keys then builtins.filter (n: !(builtins.elem n entry.keys)) names else [ ]);
+      perBlock = n:
+        let
+          block = value.${n};
+          unknown = map (f: "unknown key '${key}.${n}.${f}' in repo.nix")
+            (builtins.filter (f: !(entry.fields ? ${f})) (builtins.attrNames block));
+          badType = map (f: "key '${key}.${n}.${f}' in repo.nix failed its schema: expected ${entry.fields.${f}.type}")
+            (builtins.filter
+              (f: entry.fields ? ${f} && !(typeOk "${key}.${n}.${f}" entry.fields.${f} block.${f}))
+              (builtins.attrNames block));
+        in
+        if !(builtins.isAttrs block)
+        then [ "key '${key}.${n}' in repo.nix failed its schema: expected an attrset" ]
+        else unknown ++ badType;
+    in
+    badName ++ lib.concatMap perBlock names;
 in
 {
   mergeConfig = merged: repoConfig:
@@ -43,7 +67,13 @@ in
           (k: (merged.schema.${k}.required or false) && !(builtins.elem k (map (e: e.key) (flatten merged.schema "" resolved))))
           (builtins.attrNames merged.schema));
 
-      errors = unknown ++ badType ++ missing;
+      blocks = lib.concatMap
+        (e: blockErrors e.key merged.schema.${e.key} e.value)
+        (builtins.filter
+          (e: merged.schema ? ${e.key} && merged.schema.${e.key}.type == "attrsOf" && builtins.isAttrs e.value)
+          flat);
+
+      errors = unknown ++ badType ++ blocks ++ missing;
     in
     if errors == [ ]
     then resolved

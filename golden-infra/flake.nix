@@ -45,6 +45,31 @@
           checks.render-dev-only = snapshot "dev-only" 9 ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
           checks.render-all-envs = snapshot "all-envs" 15 ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
 
+          # infra.enabled = false has to render nothing at all: reconcile
+          # deletes infra/ first and writes managed files after, so a template
+          # that still produced output would put the tree straight back.
+          checks.disabled-renders-nothing = pkgs.runCommand "disabled-renders-nothing" { } ''
+            drv=${(render ./tests/fixtures/disabled.nix).filesDrv}
+            # Rooted at $drv, not $drv/infra: with pipefail on, a find over a
+            # missing directory fails the whole check for the wrong reason.
+            found=$(find "$drv" -path "$drv/infra/*" -type f | wc -l)
+            if [ -e "$drv/.github/workflows/deploy-infra.yml" ]; then
+              found=$((found + 1))
+            fi
+            if [ "$found" -ne 0 ]; then
+              echo "infra.enabled = false still rendered $found file(s):" >&2
+              find "$drv" -path "$drv/infra/*" -type f >&2
+              exit 1
+            fi
+            touch $out
+          '';
+
+          checks.disabled-plan-retires-the-tree = pkgs.runCommand "disabled-plan-retires-the-tree" { } ''
+            grep -q '"retiredTrees":\["infra"\]' ${(render ./tests/fixtures/disabled.nix).plan}
+            grep -q '"retiredTrees":\[\]' ${(render ./tests/fixtures/dev-only.nix).plan}
+            touch $out
+          '';
+
           # Each environment is a separate gated template, so a repo that does
           # not select an environment must not get its directory at all.
           checks.unselected-envs-are-absent = pkgs.runCommand "unselected-envs-are-absent" { } ''

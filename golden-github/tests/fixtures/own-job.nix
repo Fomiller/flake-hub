@@ -1,6 +1,6 @@
 {
   name = "own-job-repo";
-  codeowners = [ "@Fomiller" ];
+  github.codeowners = [ "@Fomiller" ];
   # A job a repo wrote itself. Nothing requires it to carry `stepsFrom`.
   ci.jobs = [{
     name = "docs";

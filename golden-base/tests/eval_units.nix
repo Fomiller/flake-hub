@@ -15,6 +15,14 @@ let
       "meta" = { type = "attrs"; };
     };
   };
+  envsSchema = {
+    type = "attrsOf";
+    keys = [ "dev" "prod" ];
+    fields = {
+      enabled = { type = "bool"; description = "on or off"; };
+      account = { type = "string"; description = "aws account"; };
+    };
+  };
   mkPack = name: {
     inherit name;
     templates = "${fixtures}/packs/${name}/templates";
@@ -365,6 +373,104 @@ in
       (packB // { overrides = [ "shared.txt" ]; executable = [ "bin/*" ]; })
     ]).executable;
     expected = [ "scripts/*" "bin/*" ];
+  };
+
+  testAttrsOfValidatesEachBlock = {
+    expr = (config.mergeConfig (mergedFixture // { schema = mergedFixture.schema // { "envs" = envsSchema; }; })
+      { name = "x"; envs.dev = { enabled = true; account = "1"; }; }).envs.dev.account;
+    expected = "1";
+  };
+
+  testAttrsOfRejectsAnUnknownField = {
+    expr = config.mergeConfig (mergedFixture // { schema = mergedFixture.schema // { "envs" = envsSchema; }; })
+      { name = "x"; envs.dev = { acount = "1"; }; };
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*unknown key 'envs.dev.acount' in repo.nix(.|\n)*";
+    };
+  };
+
+  testAttrsOfRejectsAWrongFieldType = {
+    expr = config.mergeConfig (mergedFixture // { schema = mergedFixture.schema // { "envs" = envsSchema; }; })
+      { name = "x"; envs.dev = { enabled = "yes"; }; };
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*key 'envs.dev.enabled' in repo.nix failed its schema: expected bool(.|\n)*";
+    };
+  };
+
+  testAttrsOfRejectsAnUnknownBlockName = {
+    expr = config.mergeConfig (mergedFixture // { schema = mergedFixture.schema // { "envs" = envsSchema; }; })
+      { name = "x"; envs.qa = { enabled = true; }; };
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*'envs.qa' in repo.nix is not a known envs name \\(expected dev, prod\\)(.|\n)*";
+    };
+  };
+
+  # Without `keys` any name is allowed, which is what argocd.slack needs.
+  testAttrsOfWithoutKeysAcceptsAnyName = {
+    expr = (config.mergeConfig
+      (mergedFixture // { schema = mergedFixture.schema // { "envs" = builtins.removeAttrs envsSchema [ "keys" ]; }; })
+      { name = "x"; envs.whatever = { enabled = true; }; }).envs.whatever.enabled;
+    expected = true;
+  };
+
+  testRetireTreesGateOffListsTheTree = {
+    expr = (plan.mkPlan
+      (planFixture // { retireTrees = [{ unless = "argocd.enabled"; trees = [ "argocd" "helm" ]; }]; })
+      (planConfig // { argocd.enabled = false; })).retiredTrees;
+    expected = [ "argocd" "helm" ];
+  };
+
+  testRetireTreesGateOnListsNothing = {
+    expr = (plan.mkPlan
+      (planFixture // { retireTrees = [{ unless = "argocd.enabled"; trees = [ "argocd" ]; }]; })
+      (planConfig // { argocd.enabled = true; })).retiredTrees;
+    expected = [ ];
+  };
+
+  testRetireTreesUnsetGateThrows = {
+    expr = plan.mkPlan
+      (planFixture // { retireTrees = [{ unless = "argocd.enabled"; trees = [ "argocd" ]; }]; })
+      planConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*gate 'argocd.enabled' is not set in the merged config(.|\n)*";
+    };
+  };
+
+  testRetireTreesRejectsAGlob = {
+    expr = plan.mkPlan
+      (planFixture // { retireTrees = [{ unless = "argocd.enabled"; trees = [ "argocd/*" ]; }]; })
+      (planConfig // { argocd.enabled = true; });
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*tree 'argocd/\\*' must be a plain relative directory(.|\n)*";
+    };
+  };
+
+  # Keeping a file the engine is about to delete wholesale is a contradiction,
+  # and the generic `stale` message would not say why.
+  testUnmanagedUnderRetiredTreeThrows = {
+    expr = plan.mkPlan
+      (planFixture // { retireTrees = [{ unless = "argocd.enabled"; trees = [ "argocd" ]; }]; })
+      (planConfig // { argocd.enabled = false; unmanaged = [ "argocd/mine.yaml" ]; });
+    expectedError = {
+      type = "ThrownError";
+      msg = "(.|\n)*sits under 'argocd', which is retired wholesale(.|\n)*";
+    };
+  };
+
+  testMergeUnionsRetireTreesAcrossPacks = {
+    expr = (merge.mergePacks [
+      (packA // { retireTrees = [{ unless = "a.enabled"; trees = [ "a" ]; }]; })
+      (packB // { overrides = [ "shared.txt" ]; retireTrees = [{ unless = "b.enabled"; trees = [ "b" ]; }]; })
+    ]).retireTrees;
+    expected = [
+      { unless = "a.enabled"; trees = [ "a" ]; }
+      { unless = "b.enabled"; trees = [ "b" ]; }
+    ];
   };
 
   testManagedScaffoldOverlapThrows = {

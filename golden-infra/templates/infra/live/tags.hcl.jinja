@@ -1,3 +1,4 @@
+{% if infra.enabled %}
 {% include "_infra_header.jinja" %}
 
 locals {
@@ -6,3 +7,4 @@ locals {
     managedWith = "terraform"
   }
 }
+{% endif %}

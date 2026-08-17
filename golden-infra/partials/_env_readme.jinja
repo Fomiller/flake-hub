@@ -1,6 +1,7 @@
-# infra/live/staging
+{% if infra.enabled and infra.environments[env].enabled %}
+# infra/live/{{ env }}
 
-The staging environment. Three files live here and nothing else:
+The {{ env }} environment. Three files live here and nothing else:
 
 - `account.hcl` — the environment name, region and account
 - `terragrunt.stack.hcl` — which stacks this environment gets
@@ -11,6 +12,7 @@ run` from `infra/stacks/` and `infra/units/`, and is gitignored. Do not edit a
 unit here — edit it under `infra/units/`.
 
 ```sh
-just plan staging
-just apply staging
+just plan {{ env }}
+just apply {{ env }}
 ```
+{% endif %}

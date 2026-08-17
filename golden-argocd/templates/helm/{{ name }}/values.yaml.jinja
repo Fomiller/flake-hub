@@ -1,3 +1,4 @@
+{% if argocd.enabled %}
 # Written once, then it is yours. `nix run .#generate` never touches it again.
 
 replicas: {{ argocd.replicas }}
@@ -5,3 +6,4 @@ replicas: {{ argocd.replicas }}
 image:
   repository: {{ name }}
   tag: latest
+{% endif %}
