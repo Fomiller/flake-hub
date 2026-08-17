@@ -130,7 +130,7 @@
           # An overlay for an unselected environment must not land at all.
           checks.unselected-env-has-no-overlay = pkgs.runCommand "unselected-env-has-no-overlay" { } ''
             if [ -e ${golden.filesDrv}/argocd/overlays/staging ]; then
-              echo "staging is not in deploy.envs but its overlay was rendered" >&2
+              echo "staging is not in argocd.envs but its overlay was rendered" >&2
               exit 1
             fi
             touch $out

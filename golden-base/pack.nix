@@ -12,9 +12,11 @@
   };
   registry = { };
   ownership = {
-    managed = [ ".gitignore" ".editorconfig" ".envrc" "justfile" ];
+    managed = [ ".gitignore" "justfile" ];
     scaffold = [ "README.md" ];
-    retired = [ ];
+    # Editor and shell setup is the developer's, not the repo's. Listed here so
+    # a repo that already has the generated copies gets them removed.
+    retired = [ ".editorconfig" ".envrc" ];
   };
   overrides = [ ];
   executable = [ ];

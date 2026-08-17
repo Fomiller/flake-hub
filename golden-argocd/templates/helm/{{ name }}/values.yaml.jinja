@@ -1,6 +1,6 @@
 # Written once, then it is yours. `nix run .#generate` never touches it again.
 
-replicas: {{ deploy.replicas }}
+replicas: {{ argocd.replicas }}
 
 image:
   repository: {{ name }}

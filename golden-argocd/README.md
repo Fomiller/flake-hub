@@ -27,18 +27,18 @@ repo that grows a second chart puts it beside the first under `helm/`.
 
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
-| `deploy.registry` | string | yes | — |
-| `deploy.roleToAssume` | string | yes | — |
-| `deploy.awsRegion` | string | no | `us-east-1` |
-| `deploy.envs` | list | no | `[ "dev" ]` |
-| `deploy.replicas` | int | no | `1` |
-| `deploy.chartVersion` | string | no | `0.1.0` |
-| `deploy.platforms` | list | no | `[ "linux/amd64" ]` |
+| `argocd.registry` | string | yes | — |
+| `argocd.roleToAssume` | string | yes | — |
+| `argocd.awsRegion` | string | no | `us-east-1` |
+| `argocd.envs` | list | no | `[ "dev" ]` |
+| `argocd.replicas` | int | no | `1` |
+| `argocd.chartVersion` | string | no | `0.1.0` |
+| `argocd.platforms` | list | no | `[ "linux/amd64" ]` |
 
 ## Two ECR repositories
 
 A service uses two: `<name>` for the image, `<name>-chart` for the chart. Both
-sit at the registry root, so `deploy.registry` is the whole prefix.
+sit at the registry root, so `argocd.registry` is the whole prefix.
 
 The `-chart` suffix is written into `Chart.yaml`'s `name`, not appended by the
 publish workflow. `helm push` reads the repository name out of the packaged
@@ -49,7 +49,7 @@ check that keeps the chart name and the overlays in step.
 Neither repository is created by this pack. Terraform owns them — see
 `golden-infra`.
 
-`deploy.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
+`argocd.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
 supported, one static template each, for the same reason `golden-infra` works
 that way: makejinja renders a static tree.
 

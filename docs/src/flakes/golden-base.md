@@ -1,7 +1,7 @@
 # golden-base
 
-The files every repo gets: `.gitignore`, `.editorconfig`, `.envrc`, a `justfile`
-and a `README.md`. Selecting it is not optional — `init` always includes it.
+The files every repo gets: `.gitignore`, a `justfile` and a `README.md`.
+Selecting it is not optional — `init` always includes it.
 
 ```nix
 golden-base.url = "github:Fomiller/flake-hub?dir=golden-base&ref=refs/tags/golden-base-<version>";
@@ -39,9 +39,9 @@ commented out beside the default they fall back to.
 
 | Class | Paths |
 |---|---|
-| managed | `.gitignore`, `.editorconfig`, `.envrc`, `justfile` |
+| managed | `.gitignore`, `justfile` |
 | scaffold | `README.md` |
-| retired | _none_ |
+| retired | `.editorconfig`, `.envrc` |
 <!-- END GENERATED REFERENCE -->
 
 ## Notes
