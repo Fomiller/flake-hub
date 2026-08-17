@@ -27,9 +27,23 @@
   overrides = [ ];
   executable = [ ];
   schema = {
-    "language" = { type = "enum"; values = [ "go" "rust" ]; required = true; };
-    "service.container" = { type = "bool"; };
-    "service.port" = { type = "int"; };
-    "service.binary" = { type = "string"; };
+    "language" = {
+      type = "enum";
+      values = [ "go" "rust" ];
+      required = true;
+      description = "Picks the CI steps, the just recipes, and the Dockerfile base images.";
+    };
+    "service.container" = {
+      type = "bool";
+      description = "Whether to write a Dockerfile. Off for a library.";
+    };
+    "service.port" = {
+      type = "int";
+      description = "Port the service listens on. Reaches the Dockerfile and the chart.";
+    };
+    "service.binary" = {
+      type = "string";
+      description = "Binary name, if it is not the repo name.";
+    };
   };
 }

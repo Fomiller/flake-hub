@@ -31,17 +31,17 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ## Configuration
 
-| Key | Type | Required |
-|---|---|---|
-| `infra.awsProviderVersion` | string | no |
-| `infra.awsRegion` | string | no |
-| `infra.dopplerProject` | string | yes |
-| `infra.envs` | list | no |
-| `infra.namespace` | string | no |
-| `infra.ownerEmail` | string | yes |
-| `infra.stateBucket` | string | yes |
-| `infra.tailscale` | bool | no |
-| `infra.terraformVersion` | string | no |
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `infra.awsProviderVersion` | string | no | `">=5.0.0"` | Version constraint written to the generated aws provider block. |
+| `infra.awsRegion` | string | no | `"us-east-1"` | Region for the AWS provider and the state backend. |
+| `infra.dopplerProject` | string | yes | — | Doppler project the deploy workflow pulls secrets from. |
+| `infra.envs` | list | no | `[ "dev" ]` | Which environments get a directory under infra/live/. Only dev, staging and prod exist. |
+| `infra.namespace` | string | no | `"fomiller"` | Prefix on resource names, so two repos in one account do not collide. |
+| `infra.ownerEmail` | string | yes | — | Goes on every resource as an owner tag. |
+| `infra.stateBucket` | string | yes | — | S3 bucket holding terraform state. Shared across repos. |
+| `infra.tailscale` | bool | no | `true` | Whether the deploy workflow joins Tailscale before running terragrunt. |
+| `infra.terraformVersion` | string | no | `">=1.11.0"` | Version constraint written to the generated required_version. |
 
 ## Files
 

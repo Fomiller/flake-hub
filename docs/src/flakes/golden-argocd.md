@@ -32,16 +32,16 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ## Configuration
 
-| Key | Type | Required |
-|---|---|---|
-| `argocd.awsRegion` | string | no |
-| `argocd.chartVersion` | string | no |
-| `argocd.envs` | list | no |
-| `argocd.platforms` | list | no |
-| `argocd.registry` | string | yes |
-| `argocd.replicas` | int | no |
-| `argocd.roleToAssume` | string | yes |
-| `service.port` | int | yes |
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `argocd.awsRegion` | string | no | `"us-east-1"` | Region the publish workflows log in to ECR against. |
+| `argocd.chartVersion` | string | no | `"0.1.0"` | Chart version in Chart.yaml, and the version the overlays pull. |
+| `argocd.envs` | list | no | `[ "dev" ]` | Which environments get an overlay. Only dev, staging and prod exist. |
+| `argocd.platforms` | list | no | `[ "linux/amd64" ]` | Platforms the image is built for, passed to buildx. |
+| `argocd.registry` | string | yes | — | OCI registry host. Both the image and the chart sit at its root. |
+| `argocd.replicas` | int | no | `1` | Replica count in the shared overlay values, before per-environment overrides. |
+| `argocd.roleToAssume` | string | yes | — | IAM role the publish workflows assume over OIDC. |
+| `service.port` | int | yes | — | Port the chart's Service and Deployment expose. |
 
 ## Files
 

@@ -6,15 +6,21 @@ let
       e = pack.schema.${key};
       values = lib.optionalString (e ? values)
         " (${lib.concatStringsSep ", " (map (v: "`${v}`") e.values)})";
+      default = lib.attrByPath (lib.splitString "." key) null pack.defaults;
+      defaultCell = if default == null then "—" else "`${fmt default}`";
+      # A key nobody can explain is a key nobody should ship. Failing here is
+      # cheaper than a reference table with a blank column.
+      description = e.description or
+        (throw "gen-reference: ${pack.name} schema key '${key}' has no description");
     in
-    "| `${key}` | ${e.type}${values} | ${if e.required or false then "yes" else "no"} |";
+    "| `${key}` | ${e.type}${values} | ${if e.required or false then "yes" else "no"} | ${defaultCell} | ${description} |";
 
   schemaTable =
     if pack.schema == { } then "This pack takes no configuration."
     else
       lib.concatStringsSep "\n" ([
-        "| Key | Type | Required |"
-        "|---|---|---|"
+        "| Key | Type | Required | Default | Description |"
+        "|---|---|---|---|---|"
       ] ++ map row (builtins.attrNames pack.schema));
 
   fileList = cls:

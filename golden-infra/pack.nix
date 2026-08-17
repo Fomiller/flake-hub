@@ -49,14 +49,44 @@
   overrides = [ ];
   executable = [ ];
   schema = {
-    "infra.envs" = { type = "list"; };
-    "infra.dopplerProject" = { type = "string"; required = true; };
-    "infra.awsRegion" = { type = "string"; };
-    "infra.namespace" = { type = "string"; };
-    "infra.ownerEmail" = { type = "string"; required = true; };
-    "infra.tailscale" = { type = "bool"; };
-    "infra.stateBucket" = { type = "string"; required = true; };
-    "infra.terraformVersion" = { type = "string"; };
-    "infra.awsProviderVersion" = { type = "string"; };
+    "infra.envs" = {
+      type = "list";
+      description = "Which environments get a directory under infra/live/. Only dev, staging and prod exist.";
+    };
+    "infra.dopplerProject" = {
+      type = "string";
+      required = true;
+      description = "Doppler project the deploy workflow pulls secrets from.";
+    };
+    "infra.awsRegion" = {
+      type = "string";
+      description = "Region for the AWS provider and the state backend.";
+    };
+    "infra.namespace" = {
+      type = "string";
+      description = "Prefix on resource names, so two repos in one account do not collide.";
+    };
+    "infra.ownerEmail" = {
+      type = "string";
+      required = true;
+      description = "Goes on every resource as an owner tag.";
+    };
+    "infra.tailscale" = {
+      type = "bool";
+      description = "Whether the deploy workflow joins Tailscale before running terragrunt.";
+    };
+    "infra.stateBucket" = {
+      type = "string";
+      required = true;
+      description = "S3 bucket holding terraform state. Shared across repos.";
+    };
+    "infra.terraformVersion" = {
+      type = "string";
+      description = "Version constraint written to the generated required_version.";
+    };
+    "infra.awsProviderVersion" = {
+      type = "string";
+      description = "Version constraint written to the generated aws provider block.";
+    };
   };
 }

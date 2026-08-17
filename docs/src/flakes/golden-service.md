@@ -26,12 +26,12 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ## Configuration
 
-| Key | Type | Required |
-|---|---|---|
-| `language` | enum (`go`, `rust`) | yes |
-| `service.binary` | string | no |
-| `service.container` | bool | no |
-| `service.port` | int | no |
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `language` | enum (`go`, `rust`) | yes | — | Picks the CI steps, the just recipes, and the Dockerfile base images. |
+| `service.binary` | string | no | — | Binary name, if it is not the repo name. |
+| `service.container` | bool | no | `true` | Whether to write a Dockerfile. Off for a library. |
+| `service.port` | int | no | `8080` | Port the service listens on. Reaches the Dockerfile and the chart. |
 
 ## Files
 
