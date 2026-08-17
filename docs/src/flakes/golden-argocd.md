@@ -15,7 +15,7 @@ commented out beside the default they fall back to.
 
 ```nix
 {
-  deploy = {
+  argocd = {
     registry = "…";  # required, string
     roleToAssume = "…";  # required, string
     # awsRegion = "us-east-1";  # string, default
@@ -34,13 +34,13 @@ commented out beside the default they fall back to.
 
 | Key | Type | Required |
 |---|---|---|
-| `deploy.awsRegion` | string | no |
-| `deploy.chartVersion` | string | no |
-| `deploy.envs` | list | no |
-| `deploy.platforms` | list | no |
-| `deploy.registry` | string | yes |
-| `deploy.replicas` | int | no |
-| `deploy.roleToAssume` | string | yes |
+| `argocd.awsRegion` | string | no |
+| `argocd.chartVersion` | string | no |
+| `argocd.envs` | list | no |
+| `argocd.platforms` | list | no |
+| `argocd.registry` | string | yes |
+| `argocd.replicas` | int | no |
+| `argocd.roleToAssume` | string | yes |
 | `service.port` | int | yes |
 
 ## Files
@@ -71,7 +71,7 @@ regenerated.
 Each overlay inflates the chart from OCI with the base values first and its own
 `values.app.yaml` second, so a per-environment file carries only what differs.
 
-`deploy.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
+`argocd.envs` picks which overlays exist. Only `dev`, `staging` and `prod` are
 supported, one static template each — the same constraint `golden-infra` has,
 because makejinja renders a static tree.
 

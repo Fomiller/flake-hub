@@ -1,12 +1,12 @@
-{% if "dev" in deploy.envs %}{% include "_argocd_header.jinja" %}
+{% if "dev" in argocd.envs %}{% include "_argocd_header.jinja" %}
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 helmCharts:
   - name: {{ name }}-chart
-    repo: oci://{{ deploy.registry }}
-    version: {{ deploy.chartVersion }}
+    repo: oci://{{ argocd.registry }}
+    version: {{ argocd.chartVersion }}
     releaseName: {{ name }}-dev
     namespace: {{ name }}
     # Shared defaults first, this environment's overrides second. On a key both

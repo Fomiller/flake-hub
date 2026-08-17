@@ -18,7 +18,7 @@ jobs:
       id-token: write
       contents: read
     with:
-      role-to-assume: {{ deploy.roleToAssume }}
-      aws-region: {{ deploy.awsRegion }}
+      role-to-assume: {{ argocd.roleToAssume }}
+      aws-region: {{ argocd.awsRegion }}
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
     secrets: inherit

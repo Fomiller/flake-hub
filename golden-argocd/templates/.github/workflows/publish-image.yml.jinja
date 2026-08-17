@@ -17,9 +17,9 @@ jobs:
       contents: read
     with:
       repository: {{ name }}
-      role-to-assume: {{ deploy.roleToAssume }}
-      aws-region: {{ deploy.awsRegion }}
-      platforms: {{ deploy.platforms | join(",") }}
+      role-to-assume: {{ argocd.roleToAssume }}
+      aws-region: {{ argocd.awsRegion }}
+      platforms: {{ argocd.platforms | join(",") }}
       # A pull request builds the image and throws it away. Only main pushes.
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
     secrets: inherit

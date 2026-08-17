@@ -3,7 +3,7 @@
   templates = ./templates;
   partials = ./partials;
   defaults = {
-    deploy = {
+    argocd = {
       envs = [ "dev" ];
       replicas = 1;
       chartVersion = "0.1.0";
@@ -47,12 +47,12 @@
     # repo that takes this pack without golden-service should fail at eval
     # rather than at render time.
     "service.port" = { type = "int"; required = true; };
-    "deploy.registry" = { type = "string"; required = true; };
-    "deploy.roleToAssume" = { type = "string"; required = true; };
-    "deploy.awsRegion" = { type = "string"; };
-    "deploy.envs" = { type = "list"; };
-    "deploy.replicas" = { type = "int"; };
-    "deploy.chartVersion" = { type = "string"; };
-    "deploy.platforms" = { type = "list"; };
+    "argocd.registry" = { type = "string"; required = true; };
+    "argocd.roleToAssume" = { type = "string"; required = true; };
+    "argocd.awsRegion" = { type = "string"; };
+    "argocd.envs" = { type = "list"; };
+    "argocd.replicas" = { type = "int"; };
+    "argocd.chartVersion" = { type = "string"; };
+    "argocd.platforms" = { type = "list"; };
   };
 }

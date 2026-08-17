@@ -6,7 +6,7 @@
 
 fullnameOverride: {{ name }}
 
-replicas: {{ deploy.replicas }}
+replicas: {{ argocd.replicas }}
 
 image:
-  repository: {{ deploy.registry }}/{{ name }}
+  repository: {{ argocd.registry }}/{{ name }}

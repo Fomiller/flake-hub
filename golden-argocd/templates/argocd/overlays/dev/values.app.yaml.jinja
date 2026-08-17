@@ -1,4 +1,4 @@
-{% if "dev" in deploy.envs %}# Written once, then it is yours. `nix run .#generate` never touches it again.
+{% if "dev" in argocd.envs %}# Written once, then it is yours. `nix run .#generate` never touches it again.
 #
 # dev overrides, layered on ../values.app.base.yaml. Only keys that differ from
 # the base belong here.

@@ -9,10 +9,10 @@ itself, see `golden-engine/README.md`.
 | File            | Class      | Behavior                                    |
 | --------------- | ---------- | -------------------------------------------- |
 | `.gitignore`    | managed    | Regenerated every run.                       |
-| `.editorconfig` | managed    | Regenerated every run.                       |
-| `.envrc`        | managed    | Regenerated every run.                       |
 | `justfile`      | managed    | Regenerated every run.                       |
 | `README.md`     | scaffold   | Written once by `generate`, then yours to edit. |
+| `.editorconfig` | retired    | Removed if present. Editor setup is yours, not the pack's. |
+| `.envrc`        | retired    | Removed if present. Shell setup is yours, not the pack's. |
 
 ## Config schema
 
