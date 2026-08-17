@@ -8,7 +8,7 @@ came out of `nix run .#generate`, not out of a doc.
 <https://github.com/Fomiller/flake-hub-example>
 
 The smallest thing the hub can manage. `golden-base` and `golden-github`, no
-language, no service. A three-line `repo.nix` produces eight files.
+language, no service. A three-line `repo.nix` produces six files.
 
 Read this one first if you want to see what the baseline costs.
 
@@ -17,13 +17,14 @@ Read this one first if you want to see what the baseline costs.
 <https://github.com/Fomiller/flake-hub-example-service>
 
 Every pack turned on: base, github, service, infra and argocd. A 28-line
-`repo.nix` produces 33 files — the base set, the workflows, a Dockerfile, the
-terragrunt frame for two environments, a Helm chart under `helm/`, and the
-Argo CD overlays that deploy it.
+`repo.nix` produces 26 files — the base set, the workflows, a Dockerfile, the
+terragrunt frame, a Helm chart under `helm/`, and the Argo CD overlay that
+deploys it.
 
 The overlays are worth a look. Each one inflates the chart from OCI with a
-shared values file plus its own, so dev runs one replica on `:latest` while
-prod runs two on a pinned tag, from the same chart.
+shared values file plus its own, so dev runs one replica while the shared base
+asks for two. Only `dev` is on: `argocd.envs` decides which overlays exist, and
+prod is off by default.
 
 The two ECR repositories are worth a look too. `flake-hub-example-service`
 holds the image and `flake-hub-example-service-chart` holds the chart, and the
