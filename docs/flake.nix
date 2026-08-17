@@ -8,10 +8,11 @@
     golden-service.url = "path:../golden-service";
     golden-infra.url = "path:../golden-infra";
     golden-argocd.url = "path:../golden-argocd";
+    golden-docs.url = "path:../golden-docs";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, golden-base, golden-github, golden-service, golden-infra, golden-argocd, flake-utils }:
+  outputs = { self, nixpkgs, golden-base, golden-github, golden-service, golden-infra, golden-argocd, golden-docs, flake-utils }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
@@ -24,6 +25,7 @@
             golden-service.pack
             golden-infra.pack
             golden-argocd.pack
+            golden-docs.pack
           ];
 
           # golden-engine has no schema and no files, so it has no generated

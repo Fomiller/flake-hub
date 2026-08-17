@@ -37,6 +37,7 @@ a repo can clear an inherited list with `[ ]` — but cannot append to one.
 | A compiled service | the above plus `golden-service` |
 | A service deployed by Argo CD | the above plus `golden-argocd` |
 | A terragrunt repo | `golden-base`, `golden-github`, `golden-infra` |
+| Any of the above with a book | plus `golden-docs` |
 
 `golden-engine` is not in the pack list — it is the thing the list is passed to.
 

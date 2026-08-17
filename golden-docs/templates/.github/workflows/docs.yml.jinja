@@ -1,0 +1,27 @@
+{% if docs.deploy %}{% include "_docs_header.jinja" %}
+
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+
+# Pages takes one deployment at a time, and a cancelled deploy leaves the site
+# on the previous build.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  docs:
+    uses: Fomiller/gh-actions/.github/workflows/mdbook.yaml@main
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      book-path: docs
+{% endif %}

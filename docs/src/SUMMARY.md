@@ -13,6 +13,7 @@
 - [golden-service](flakes/golden-service.md)
 - [golden-infra](flakes/golden-infra.md)
 - [golden-argocd](flakes/golden-argocd.md)
+- [golden-docs](flakes/golden-docs.md)
 
 # Concepts
 
