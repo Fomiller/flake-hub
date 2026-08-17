@@ -51,7 +51,7 @@ mkGolden: repo.nix is not valid:
 
 `init` seeds `codeowners` when you select `golden-github`, because that one has
 no sensible default. The rest you add yourself — a guessed value for something
-like `infra.stateBucket` would be worse than the error.
+like `infra.dopplerProject` would be worse than the error.
 
 ## Change something
 

@@ -35,8 +35,6 @@ jobs:
       doppler-project: infra-all
       tg-plan: true
       use-oidc: true
-      use-tailscale: false
-      tailscale-tags: tag:ci
     secrets: inherit
 
   apply-dev:
@@ -51,8 +49,6 @@ jobs:
       infra-dir: infra/live/dev
       doppler-project: infra-all
       use-oidc: true
-      use-tailscale: false
-      tailscale-tags: tag:ci
     secrets: inherit
   plan-staging:
     name: Plan Infra (staging)
@@ -67,8 +63,6 @@ jobs:
       doppler-project: infra-all
       tg-plan: true
       use-oidc: true
-      use-tailscale: false
-      tailscale-tags: tag:ci
     secrets: inherit
 
   apply-staging:
@@ -83,8 +77,6 @@ jobs:
       infra-dir: infra/live/staging
       doppler-project: infra-all
       use-oidc: true
-      use-tailscale: false
-      tailscale-tags: tag:ci
     secrets: inherit
   plan-prod:
     name: Plan Infra (prod)
@@ -99,8 +91,6 @@ jobs:
       doppler-project: infra-all
       tg-plan: true
       use-oidc: true
-      use-tailscale: false
-      tailscale-tags: tag:ci
     secrets: inherit
 
   apply-prod:
@@ -115,6 +105,4 @@ jobs:
       infra-dir: infra/live/prod
       doppler-project: infra-all
       use-oidc: true
-      use-tailscale: false
-      tailscale-tags: tag:ci
     secrets: inherit

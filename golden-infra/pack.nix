@@ -7,7 +7,7 @@
       envs = [ "dev" ];
       awsRegion = "us-east-1";
       namespace = "fomiller";
-      tailscale = true;
+      stateBucket = "";
       terraformVersion = ">=1.11.0";
       awsProviderVersion = ">=5.0.0";
     };
@@ -69,16 +69,11 @@
     "infra.ownerEmail" = {
       type = "string";
       required = true;
-      description = "Goes on every resource as an owner tag.";
-    };
-    "infra.tailscale" = {
-      type = "bool";
-      description = "Whether the deploy workflow joins Tailscale before running terragrunt.";
+      description = "Goes on every resource as an owner tag. infra/live/variables.hcl can override it per tree.";
     };
     "infra.stateBucket" = {
       type = "string";
-      required = true;
-      description = "S3 bucket holding terraform state. Shared across repos.";
+      description = "S3 bucket holding terraform state. Left empty, root.hcl derives <namespace>-<env>-terraform-state. infra/live/variables.hcl overrides either.";
     };
     "infra.terraformVersion" = {
       type = "string";

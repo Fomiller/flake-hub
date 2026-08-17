@@ -32,8 +32,6 @@ jobs:
       doppler-project: {{ infra.dopplerProject }}
       tg-plan: true
       use-oidc: true
-      use-tailscale: {{ infra.tailscale | lower }}
-      tailscale-tags: tag:ci
     secrets: inherit
 
   apply-{{ env }}:
@@ -48,7 +46,5 @@ jobs:
       infra-dir: infra/live/{{ env }}
       doppler-project: {{ infra.dopplerProject }}
       use-oidc: true
-      use-tailscale: {{ infra.tailscale | lower }}
-      tailscale-tags: tag:ci
     secrets: inherit
 {% endfor %}

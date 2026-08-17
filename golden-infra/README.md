@@ -41,14 +41,26 @@ generated unit directory in git is a copy that goes stale.
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
 | `infra.dopplerProject` | string | yes | — |
-| `infra.stateBucket` | string | yes | — |
 | `infra.ownerEmail` | string | yes | — |
+| `infra.stateBucket` | string | no | `""` |
 | `infra.envs` | list | no | `[ "dev" ]` |
 | `infra.awsRegion` | string | no | `us-east-1` |
 | `infra.namespace` | string | no | `fomiller` |
-| `infra.tailscale` | bool | no | `true` |
 | `infra.terraformVersion` | string | no | `>=1.11.0` |
 | `infra.awsProviderVersion` | string | no | `>=5.0.0` |
+
+## variables.hcl
+
+An optional hand-written `infra/live/variables.hcl` (or
+`infra/live/<env>/variables.hcl`, nearest wins) can set `bucket` and
+`owner_email`. Both are resolved in `root.hcl`, which is the only file that
+reads it — inside a nested `read_terragrunt_config`, `find_in_parent_folders`
+starts above that file's own directory, so `tags.hcl` cannot see a sibling
+`variables.hcl`.
+
+Bucket order: `variables.hcl`, `infra.stateBucket`, then a derived
+`<namespace>-<env>-terraform-state`. Email order: `variables.hcl`, then
+`infra.ownerEmail`.
 
 ## The state key
 
