@@ -35,7 +35,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `argocd.awsRegion` | string | no | `"us-east-1"` | Region the publish workflows log in to ECR against. |
-| `argocd.chartVersion` | string | no | `"0.1.0"` | Chart version in Chart.yaml, and the version the overlays pull. |
+| `argocd.chartVersion` | string | no | `"0.1.0"` | Chart version in Chart.yaml. Also seeds the version each overlay pulls, on the first generate only — after that the overlay is the promotion tool's to rewrite. |
 | `argocd.enabled` | bool | no | `true` | Whether this repo ships a chart and overlays. False deletes argocd/ and helm/. |
 | `argocd.environments` | list | no | `[ "dev" ]` | Which environments get an overlay. Only dev, staging and prod exist. |
 | `argocd.platforms` | list | no | `[ "linux/amd64" ]` | Platforms the image is built for, passed to buildx. |
@@ -47,8 +47,8 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 | Class | Paths |
 |---|---|
-| managed | `helm/*/Chart.yaml`, `helm/*/templates/*`, `argocd/overlays/*/kustomization.yaml`, `.github/workflows/publish-chart.yml`, `.github/workflows/publish-image.yml` |
-| scaffold | `helm/*/values.yaml`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml` |
+| managed | `helm/*/Chart.yaml`, `helm/*/templates/*`, `.github/workflows/publish-chart.yml`, `.github/workflows/publish-image.yml` |
+| scaffold | `helm/*/values.yaml`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml`, `argocd/overlays/*/kustomization.yaml` |
 | retired | `deploy/chart/Chart.yaml`, `deploy/chart/values.yaml`, `deploy/chart/templates/deployment.yaml`, `deploy/chart/templates/service.yaml`, `deploy/chart/templates/helpers.tpl` |
 <!-- END GENERATED REFERENCE -->
 
