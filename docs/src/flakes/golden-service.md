@@ -15,10 +15,11 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 ```nix
 {
-  language = "go";  # required, enum: go | rust
+  language = "go";  # required, enum: go | rust | node
   service = {
     binary = "…";  # string, no default
     container = true;  # bool, default
+    entrypoint = "…";  # string, no default
     port = 8080;  # int, default
   };
 }
@@ -28,9 +29,10 @@ to, so deleting a line changes nothing. Required keys need a real value.
 
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `language` | enum (`go`, `rust`) | yes | — | Picks the CI steps, the just recipes, and the Dockerfile base images. |
-| `service.binary` | string | no | — | Binary name, if it is not the repo name. |
+| `language` | enum (`go`, `rust`, `node`) | yes | — | Picks the CI steps, the just recipes, and the Dockerfile base images. |
+| `service.binary` | string | no | — | Binary name, if it is not the repo name. Compiled languages only. |
 | `service.container` | bool | no | `true` | Whether to write a Dockerfile. Off for a library. |
+| `service.entrypoint` | string | no | — | node only. Build output the container runs, relative to /app. Defaults to dist/index.js. |
 | `service.port` | int | no | `8080` | Port the service listens on. Reaches the Dockerfile and the chart. |
 
 ## Files
