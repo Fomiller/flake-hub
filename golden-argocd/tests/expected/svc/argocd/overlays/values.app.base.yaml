@@ -10,3 +10,9 @@ replicas: 1
 
 image:
   repository: 000000000000.dkr.ecr.us-east-1.amazonaws.com/svc-go
+
+# The registry above is private, so the kubelet needs a credential to pull
+# from it. external-secrets mints this Secret into every namespace labelled
+# for it; the name has to match what that ClusterExternalSecret creates.
+imagePullSecrets:
+  - name: ecr-image-pull
