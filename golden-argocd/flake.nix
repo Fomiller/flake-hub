@@ -108,6 +108,28 @@
               # ignores it makes that file a lie, and renders fine either way.
               helm template test ./chart --set fullnameOverride=pinned > override.yaml
               assert_grep 'name: pinned' override.yaml
+
+              # imagePullSecrets, both ways round.
+              #
+              # Empty must emit no key at all, not an empty list: a chart
+              # rendered against a public registry should carry no reference to
+              # a Secret that is not there. rendered.yaml above used the chart's
+              # own values, where the list is empty.
+              if grep -q 'imagePullSecrets' rendered.yaml; then
+                grep -n 'imagePullSecrets' rendered.yaml >&2
+                echo "imagePullSecrets is empty but the key was still rendered" >&2
+                exit 1
+              fi
+
+              # Set must reach the pod spec. This is the half that decides
+              # whether a private-registry pull works at all.
+              helm template test ./chart --set 'imagePullSecrets[0].name=ecr-image-pull' > pull.yaml
+              assert_grep 'imagePullSecrets:' pull.yaml
+              assert_grep 'name: ecr-image-pull' pull.yaml
+
+              # The overlays are what actually deploy, so the name they carry is
+              # the one that has to match the Secret external-secrets creates.
+              assert_grep 'name: ecr-image-pull' ${golden.filesDrv}/argocd/overlays/values.app.base.yaml
               touch $out
             '';
 

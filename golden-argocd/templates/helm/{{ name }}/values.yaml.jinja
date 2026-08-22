@@ -6,4 +6,11 @@ replicas: {{ argocd.replicas }}
 image:
   repository: {{ name }}
   tag: latest
+
+# Empty here on purpose. This file is the chart's own default, used by
+# `helm template` and by anyone rendering the chart directly, where the image
+# reference is a bare repository name and needs no credential. The overlays
+# pull from ECR and name the Secret themselves — see
+# argocd/overlays/values.app.base.yaml.
+imagePullSecrets: []
 {% endif %}
