@@ -84,9 +84,9 @@
             touch $out
           '';
 
-          # {{env}} is just syntax that has to survive Jinja untouched.
+          # {{infraDir}} is just syntax that has to survive Jinja untouched.
           checks.just-recipes-keep-their-braces = pkgs.runCommand "just-recipes-keep-their-braces" { } ''
-            grep -q 'cd infra/live/{{env}} && terragrunt stack run plan' ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile
+            grep -q 'terragrunt stack run --tf-path terraform --working-dir {{infraDir}} plan' ${(render ./tests/fixtures/dev-only.nix).filesDrv}/justfile
             touch $out
           '';
 
@@ -145,6 +145,14 @@
               chmod +w justfile
               just --list
               just --evaluate >/dev/null
+
+              # The exact shape gh-actions calls. An undeclared infraDir fails
+              # here with "overridden on the command line but not present in
+              # justfile", which is how this shipped broken. --dry-run resolves
+              # the recipe without needing doppler or terragrunt on PATH.
+              just --dry-run infraDir=infra/live/prod plan-all 2>&1 \
+                | grep -q -- '--working-dir infra/live/prod plan'
+              just --dry-run infraDir=infra/live/prod apply-all >/dev/null
               touch $out
             '';
 

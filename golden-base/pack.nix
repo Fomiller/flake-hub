@@ -11,6 +11,7 @@
     gitignore = [ "result" "result-*" ".direnv/" ".DS_Store" ];
     just = {
       enabled = true;
+      variables = [ ];
       recipes = [ ];
     };
     unmanaged = [ ];
@@ -50,6 +51,10 @@
     "gitignore" = {
       type = "list";
       description = "Lines written to .gitignore, one per entry. Packs append to this.";
+    };
+    "just.variables" = {
+      type = "list";
+      description = "Top-level justfile variables, as { name, value }. Declaring one is what lets `just name=value <recipe>` override it. Packs append to this.";
     };
     "just.recipes" = {
       type = "list";

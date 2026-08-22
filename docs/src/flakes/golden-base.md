@@ -21,6 +21,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
   just = {
     enabled = true;  # bool, default
     recipes = [ ];  # list, default
+    variables = [ ];  # list, default
   };
   namePrefix = "";  # string, default
   slug = "";  # string, default
@@ -36,6 +37,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | `gitignore` | list | no | `[ "result" "result-*" ".direnv/" ".DS_Store" ]` | Lines written to .gitignore, one per entry. Packs append to this. |
 | `just.enabled` | bool | no | `true` | Whether to write the justfile. False leaves the repo with no recipes at all. |
 | `just.recipes` | list | no | `[ ]` | Recipes written to the justfile. Packs append to this. |
+| `just.variables` | list | no | `[ ]` | Top-level justfile variables, as { name, value }. Declaring one is what lets `just name=value <recipe>` override it. Packs append to this. |
 | `name` | string | yes | — | Repo name. Reaches the README, the chart directory, and the image repository. |
 | `namePrefix` | string | no | `""` | Prefix stripped from name to get the slug. Only read when slug is empty. |
 | `slug` | string | no | `""` | Short name for display. Empty means name with namePrefix removed. |
