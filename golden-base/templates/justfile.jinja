@@ -4,6 +4,10 @@
 import? 'just/base.just'
 
 project := "{{ name }}"
+{% for v in just.variables %}{{ v.name }} := "{{ v.value }}"
+{% endfor %}
+{# trim_blocks eats the newline that closes the loop, so the blank line below
+   is the one that separates the variables from the first recipe. #}
 
 fetch:
     curl -sSfL https://raw.githubusercontent.com/Fomiller/justfiles/refs/heads/main/base.just > just/base.just

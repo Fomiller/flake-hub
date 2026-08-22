@@ -37,11 +37,22 @@ in
       "**/.terraform.lock.hcl"
       "infra/live/*/*/"
     ];
-    # {{env}} is just syntax, and it survives as-is: the base template emits
-    # these strings with {{ recipe }}, and Jinja does not re-render data.
+    # The names and the infraDir variable are not ours to pick: the generated
+    # deploy-infra.yml calls Fomiller/gh-actions, which runs
+    # `just infraDir=<dir> plan-all`. A variable has to be declared before just
+    # will accept an override for it, hence the entry below.
+    just.variables = [
+      { name = "infraDir"; value = "infra/live/dev"; }
+    ];
+    # doppler run is what turns Doppler values into TF_VAR_*. It stays even for
+    # a repo holding no secrets, since the shared workflow requires a Doppler
+    # project either way and an empty config injects nothing.
+    #
+    # {{infraDir}} is just syntax, and it survives as-is: the base template
+    # emits these strings with {{ recipe }}, and Jinja does not re-render data.
     just.recipes = [
-      "plan env=\"dev\":\n    cd infra/live/{{env}} && terragrunt stack run plan"
-      "apply env=\"dev\":\n    cd infra/live/{{env}} && terragrunt stack run apply"
+      "plan-all:\n    doppler run --name-transformer tf-var -- \\\n    terragrunt stack run --tf-path terraform --working-dir {{infraDir}} plan"
+      "apply-all:\n    doppler run --name-transformer tf-var -- \\\n    terragrunt stack run --tf-path terraform --working-dir {{infraDir}} apply"
     ];
   };
   registry = { };
