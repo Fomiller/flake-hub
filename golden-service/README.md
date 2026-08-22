@@ -13,13 +13,18 @@ and ships it as a container.
 
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
-| `language` | enum `go`\|`rust` | yes | — |
+| `language` | enum `go`\|`rust`\|`node` | yes | — |
 | `service.container` | bool | no | `true` |
 | `service.port` | int | no | `8080` |
 | `service.binary` | string | no | the repo `name` |
+| `service.entrypoint` | string | no | `dist/index.js` |
 
 `service.binary` has no pack default because it falls back to the repo's own
 name, which a pack cannot see. The template resolves it.
+
+`service.entrypoint` applies to `node` only. It is the built script the
+container runs, relative to `/app`. An Astro standalone build wants
+`dist/server/entry.mjs`.
 
 ## Source layout
 
@@ -29,8 +34,32 @@ Language code lives under `src/`. Go puts its main package at
 where Cargo looks.
 
 The Go build writes to `bin/`, not the repo root, so a plain `just build` does
-not leave an untracked executable behind. Both `bin/` and `target/` come from
-this pack's `gitignore` entries.
+not leave an untracked executable behind. `bin/`, `target/`, `node_modules/`
+and `dist/` all come from this pack's `gitignore` entries.
+
+## What `node` expects from the repo
+
+Go and Rust each have one canonical build command, so the registry names the
+tool. TypeScript does not — the command depends on the framework — so the
+registry calls npm scripts and the repo decides what they run. `package.json`
+must define all four:
+
+| Script | Runs |
+| --- | --- |
+| `build` | whatever produces `dist/` |
+| `test` | the test suite |
+| `lint` | the linter |
+| `typecheck` | `tsc --noEmit`, or `astro check` for an Astro repo |
+
+`typecheck` is separate from `lint` and CI runs both. A bundler strips types
+without checking them, so a repo that only lints still ships type errors.
+
+`npm ci` runs in CI and in the Dockerfile, so `package-lock.json` has to be
+committed and agree with `package.json`.
+
+Node's version is pinned in `registry.nix` rather than read from a `.nvmrc`,
+matching how the Go and Rust images are pinned. Bumping it is an edit there and
+a pack release.
 
 ## The language registry
 

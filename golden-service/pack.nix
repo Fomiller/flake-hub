@@ -10,9 +10,9 @@
     # `stepsFrom` is opaque to golden-github, which owns ci.yml. The lookup
     # happens in the template, where `language` and the registry are in scope.
     ci.jobs = [{ name = "build-test"; stepsFrom = "language"; }];
-    # Build output for both languages. Defaults are static data and cannot
+    # Build output for every language. Defaults are static data and cannot
     # branch on `language`, and an unused line costs nothing.
-    gitignore = [ "bin/" "target/" ];
+    gitignore = [ "bin/" "target/" "node_modules/" "dist/" ];
     just.recipes = [
       { name = "build"; cmdFrom = "buildCmd"; }
       { name = "test"; cmdFrom = "testCmd"; }
@@ -29,7 +29,7 @@
   schema = {
     "language" = {
       type = "enum";
-      values = [ "go" "rust" ];
+      values = [ "go" "rust" "node" ];
       required = true;
       description = "Picks the CI steps, the just recipes, and the Dockerfile base images.";
     };
@@ -43,7 +43,11 @@
     };
     "service.binary" = {
       type = "string";
-      description = "Binary name, if it is not the repo name.";
+      description = "Binary name, if it is not the repo name. Compiled languages only.";
+    };
+    "service.entrypoint" = {
+      type = "string";
+      description = "node only. Build output the container runs, relative to /app. Defaults to dist/index.js.";
     };
   };
 }

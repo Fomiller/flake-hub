@@ -18,7 +18,29 @@ RUN cargo build --release
 
 FROM {{ languages[language].runtimeImage }}
 COPY --from=build /src/target/release/{{ binary }} /{{ binary }}
+{% elif language == "node" %}
+FROM {{ languages[language].buildImage }} AS build
+WORKDIR /src
+# Manifests before sources, so an edit that leaves dependencies alone reuses
+# the install layer.
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+# devDependencies built the app and have no business in the runtime image.
+RUN npm prune --omit=dev
+
+FROM {{ languages[language].runtimeImage }}
+WORKDIR /app
+COPY --from=build /src/node_modules ./node_modules
+COPY --from=build /src/dist ./dist
 {% endif %}
 EXPOSE {{ service.port }}
+{% if language == "node" %}
+# The distroless node image already entrypoints on node, so this is the script
+# to run, not the command.
+CMD ["{{ service.entrypoint | default('dist/index.js', true) }}"]
+{% else %}
 ENTRYPOINT ["/{{ binary }}"]
+{% endif %}
 {% endif %}

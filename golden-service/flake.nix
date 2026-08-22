@@ -46,12 +46,19 @@
           packages.files-rust = (render ./tests/fixtures/rust.nix).filesDrv;
           packages.files-binary = (render ./tests/fixtures/binary.nix).filesDrv;
           packages.files-library = (render ./tests/fixtures/library.nix).filesDrv;
+          packages.files-node = (render ./tests/fixtures/node.nix).filesDrv;
+          packages.files-node-entrypoint = (render ./tests/fixtures/node-entrypoint.nix).filesDrv;
 
           # .gitignore belongs to golden-base, but it is snapshotted here too:
           # this pack appends its build output to it, and nowhere else proves
           # that two packs' entries both survive the merge.
           checks.render-go = snapshot "go" 4 ./tests/expected/go ./tests/fixtures/go.nix;
           checks.render-rust = snapshot "rust" 4 ./tests/expected/rust ./tests/fixtures/rust.nix;
+          checks.render-node = snapshot "node" 4 ./tests/expected/node ./tests/fixtures/node.nix;
+
+          # service.entrypoint has no pack default either — the template falls
+          # back to dist/index.js. This covers the case where it is set.
+          checks.render-node-entrypoint = snapshot "node-entrypoint" 3 ./tests/expected/node-entrypoint ./tests/fixtures/node-entrypoint.nix;
 
           # service.binary has no pack default: it falls back to the repo name,
           # which packs cannot see. This covers the case where it is set.
@@ -71,6 +78,14 @@
               # Bare `actionlint` walks up looking for a git repo. There isn't
               # one in a build sandbox, so name the files.
               actionlint .github/workflows/*.yml
+
+              # node again, separately: its setupStep is two steps rather than
+              # one and its lint command chains with `&&`, so it is the fixture
+              # most likely to render YAML that parses here but not on GitHub.
+              rm -rf .github
+              cp -r ${(render ./tests/fixtures/node.nix).filesDrv}/.github .
+              chmod -R +w .github
+              actionlint .github/workflows/*.yml
               touch $out
             '';
 
@@ -80,10 +95,12 @@
             { nativeBuildInputs = [ pkgs.just ]; }
             ''
               mkdir -p repo && cd repo
-              cp ${(render ./tests/fixtures/go.nix).filesDrv}/justfile .
-              chmod +w justfile
-              just --list
-              just --evaluate >/dev/null
+              for f in ${(render ./tests/fixtures/go.nix).filesDrv} ${(render ./tests/fixtures/node.nix).filesDrv}; do
+                cp "$f/justfile" .
+                chmod +w justfile
+                just --list
+                just --evaluate >/dev/null
+              done
               touch $out
             '';
 
