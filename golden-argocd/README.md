@@ -13,12 +13,12 @@ it required so a repo that forgets fails at eval instead of at render time.
 | --- | --- | --- |
 | `helm/<chart>/Chart.yaml` | managed | name and version |
 | `helm/<chart>/templates/*` | managed | deployment, service, helpers |
-| `argocd/overlays/*/kustomization.yaml` | managed | one per selected environment |
 | `.github/workflows/publish-chart.yml` | managed | packages on PRs, pushes on main |
 | `.github/workflows/publish-image.yml` | managed | builds on PRs, pushes on main |
 | `helm/<chart>/values.yaml` | scaffold | chart defaults, written once |
 | `argocd/overlays/values.app.base.yaml` | scaffold | shared across environments |
 | `argocd/overlays/*/values.app.yaml` | scaffold | per-environment overrides |
+| `argocd/overlays/*/kustomization.yaml` | scaffold | one per selected environment |
 
 `<chart>` is the repo's `name`. The chart directory is named after it, so a
 repo that grows a second chart puts it beside the first under `helm/`.
@@ -58,8 +58,28 @@ that way: makejinja renders a static tree.
 Each overlay's `kustomization.yaml` inflates the chart from OCI and points at
 two values files: `../values.app.base.yaml` first, then its own
 `values.app.yaml`. Later wins on any key both set, so the per-environment file
-carries only what actually differs. Both are scaffold — the generator writes
-them once and never again.
+carries only what actually differs. All three are scaffold — the generator
+writes them once and never again.
+
+## Why the overlay kustomization is scaffold
+
+The values files are scaffold because they are the service's own configuration.
+The kustomization is scaffold for a different reason: it carries the deployed
+chart version, and a promotion tool rewrites that on every release. A managed
+file is regenerated from `repo.nix`, which would revert the promotion silently,
+on whatever `nix run .#generate` happens to run next.
+
+It has to be the whole file rather than the one line. Kustomize performs no
+substitution into `helmCharts[].version`, and `replacements` act on rendered
+resources rather than on the kustomization's own generator config, so the
+version cannot be read out of a separate file.
+
+The cost is real: a later change to the overlay's shape — a new values file, a
+different release name — does not reach a repo that already has one. Such a
+change needs a note in the pack's release and a manual edit downstream.
+
+`argocd.chartVersion` still seeds the first write. After that the file is the
+repo's.
 
 ## The chart directory name is templated
 

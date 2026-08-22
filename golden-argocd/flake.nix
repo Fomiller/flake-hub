@@ -111,6 +111,32 @@
               touch $out
             '';
 
+          # The reason this file is scaffold rather than managed. It carries the
+          # deployed chart version, which a promotion tool rewrites on release.
+          # Managed would mean the next `nix run .#generate` puts repo.nix's
+          # value back and silently undoes the promotion.
+          #
+          # Asserting the plan, not the rendered tree: both classes render the
+          # same bytes on a repo that does not have the file yet, so only the
+          # ownership class distinguishes them.
+          checks.overlay-kustomization-is-scaffold =
+            pkgs.runCommand "overlay-kustomization-is-scaffold"
+              { nativeBuildInputs = [ pkgs.jq ]; }
+              ''
+                for env in dev prod; do
+                  path="argocd/overlays/$env/kustomization.yaml"
+                  if ! jq -e --arg p "$path" '.scaffold | index($p)' ${golden.plan} >/dev/null; then
+                    echo "$path is not scaffold: a promoted chart version would be reverted by generate" >&2
+                    exit 1
+                  fi
+                  if jq -e --arg p "$path" '.managed | index($p)' ${golden.plan} >/dev/null; then
+                    echo "$path is still managed" >&2
+                    exit 1
+                  fi
+                done
+                touch $out
+              '';
+
           # An overlay that names a values file which is not there fails only
           # when Argo CD tries to sync it, which is a long way from here.
           checks.overlay-values-files-exist = pkgs.runCommand "overlay-values-files-exist"

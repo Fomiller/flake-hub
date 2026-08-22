@@ -19,16 +19,26 @@
     managed = [
       "helm/*/Chart.yaml"
       "helm/*/templates/*"
-      "argocd/overlays/*/kustomization.yaml"
       ".github/workflows/publish-chart.yml"
       ".github/workflows/publish-image.yml"
     ];
     # The chart's values and the overlay values are the service's own
     # configuration surface, so they are written once and then left alone.
+    #
+    # The overlay kustomization is scaffold for a different reason: it carries
+    # the deployed chart version, which a promotion tool rewrites on every
+    # release. Regenerating it would revert that write from repo.nix, silently
+    # and only on whatever `nix run .#generate` happens to run next.
+    #
+    # It has to be the whole file. Kustomize does no substitution into
+    # `helmCharts[].version`, and `replacements` act on rendered resources
+    # rather than on the kustomization's own generator config, so the version
+    # cannot be read out of a separate file.
     scaffold = [
       "helm/*/values.yaml"
       "argocd/overlays/values.app.base.yaml"
       "argocd/overlays/*/values.app.yaml"
+      "argocd/overlays/*/kustomization.yaml"
     ];
     # Was deploy/chart before the chart moved under helm/<chart>/. Listed so a
     # repo on the old layout has them removed rather than left as a second,
@@ -80,7 +90,7 @@
     };
     "argocd.chartVersion" = {
       type = "string";
-      description = "Chart version in Chart.yaml, and the version the overlays pull.";
+      description = "Chart version in Chart.yaml. Also seeds the version each overlay pulls, on the first generate only — after that the overlay is the promotion tool's to rewrite.";
     };
     "argocd.platforms" = {
       type = "list";
