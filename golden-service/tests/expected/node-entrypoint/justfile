@@ -4,11 +4,18 @@
 # To change it, edit repo.nix, or the template in the pack that owns it.
 # ---------------------------------------------------------------------------
 
-result
-result-*
-.direnv/
-.DS_Store
-bin/
-target/
-node_modules/
-dist/
+import? 'just/base.just'
+
+project := "svc-node-entry"
+
+fetch:
+    curl -sSfL https://raw.githubusercontent.com/Fomiller/justfiles/refs/heads/main/base.just > just/base.just
+
+generate:
+    nix run .#generate
+
+build:
+    npm run build
+
+test:
+    npm test
