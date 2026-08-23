@@ -99,8 +99,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 10 ]; then
-              echo "expected tree holds $found files, not 10" >&2
+            if [ "$found" -ne 11 ]; then
+              echo "expected tree holds $found files, not 11" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
@@ -170,6 +170,14 @@
               # The overlays are what actually deploy, so the name they carry is
               # the one that has to match the Secret external-secrets creates.
               assert_grep 'name: ecr-image-pull' ${golden.filesDrv}/argocd/overlays/values.app.base.yaml
+
+              # externalSecrets is empty by default and must render nothing.
+              # A chart that needs a ClusterSecretStore to render cannot be
+              # inspected with `helm template` on a laptop.
+              if grep -q 'ExternalSecret' rendered.yaml; then
+                echo "externalSecrets is empty but an ExternalSecret rendered" >&2
+                exit 1
+              fi
               touch $out
             '';
 
@@ -244,23 +252,26 @@
               touch $out
             '';
 
-          # The Kargo project shares the workload's namespace, and this chart
-          # declares that Namespace — so Argo CD's managedNamespaceMetadata
-          # never applies to it. Drop the label here and the image pull Secret
-          # stops being minted, which surfaces as ImagePullBackOff long after
-          # anyone connects it to this file.
-          checks.kargo-namespace-keeps-the-pull-label =
-            pkgs.runCommand "kargo-namespace-keeps-the-pull-label"
+          # values.kargo.yaml describes this service's pipeline and nothing
+          # else. Credentials and the namespace's pull label are cluster facts,
+          # identical for every project, and kargo-project-chart defines them
+          # once. Scaffolding a copy here means every repo carries the registry
+          # host and the store names, and a cluster change becomes a PR per
+          # service.
+          checks.kargo-values-carry-no-cluster-facts =
+            pkgs.runCommand "kargo-values-carry-no-cluster-facts"
               { nativeBuildInputs = [ pkgs.yq-go ]; }
               ''
                 f=${golden.filesDrv}/argocd/overlays/prod/values.kargo.yaml
-                got=$(yq -r '.project.namespaceLabels."fomiller.dev/ecr-pull"' "$f")
-                if [ "$got" != "true" ]; then
-                  echo "values.kargo.yaml does not label the namespace for the ECR pull Secret" >&2
-                  cat "$f" >&2
-                  exit 1
-                fi
-                # Same namespace, or Kargo rejects the project outright.
+                for key in .credentials .project.namespaceLabels; do
+                  if [ "$(yq -r "$key // \"null\"" "$f")" != "null" ]; then
+                    echo "values.kargo.yaml sets $key; that belongs in kargo-project-chart" >&2
+                    cat "$f" >&2
+                    exit 1
+                  fi
+                done
+                # Kargo requires a project's name and namespace to match, and
+                # rejects the project outright otherwise.
                 ns=$(yq -r '.helmCharts[] | select(.name == "kargo-project-chart") | .namespace' \
                   ${golden.filesDrv}/argocd/overlays/prod/kustomization.yaml)
                 [ "$ns" = "$(yq -r '.project.name' "$f")" ]

@@ -120,11 +120,14 @@ Two things about this shape are load-bearing:
 
 The Kargo project runs in the workload's namespace, not one of its own. Kargo
 requires a project's name and its namespace to match, so the project is named
-after the service. That makes the Kargo chart the thing declaring the
-Namespace, and Argo CD's `managedNamespaceMetadata` only applies to a namespace
-it creates itself — so `values.kargo.yaml` carries the ECR pull label instead.
-Drop it and the pods stop pulling.
-`kargo-namespace-keeps-the-pull-label` is the check.
+after the service.
+
+`values.kargo.yaml` describes this service's pipeline and nothing else. The
+promotion credentials and the namespace's ECR pull label are cluster facts —
+same GitHub account, same registry, same secret stores for every service — so
+`kargo-project-chart` defines them once and a repo names none of them. A copy
+here would put the registry host in every repo and turn a cluster change into a
+PR per service. `kargo-values-carry-no-cluster-facts` is the check.
 
 Nothing in the service's repo names the values files by path, so
 `overlay-values-files-exist` asserts them literally. A missing one otherwise
