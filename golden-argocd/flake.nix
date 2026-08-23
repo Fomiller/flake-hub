@@ -125,8 +125,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 13 ]; then
-              echo "expected tree holds $found files, not 13" >&2
+            if [ "$found" -ne 11 ]; then
+              echo "expected tree holds $found files, not 11" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
@@ -193,54 +193,32 @@
               touch $out
             '';
 
-          # The reason this file is scaffold rather than managed. It carries the
-          # deployed chart version, which a promotion tool rewrites on release.
-          # Managed would mean the next `nix run .#generate` puts repo.nix's
-          # value back and silently undoes the promotion.
-          #
-          # Asserting the plan, not the rendered tree: both classes render the
-          # same bytes on a repo that does not have the file yet, so only the
-          # ownership class distinguishes them.
-          checks.overlay-kustomization-is-scaffold =
-            pkgs.runCommand "overlay-kustomization-is-scaffold"
-              { nativeBuildInputs = [ pkgs.jq ]; }
-              ''
-                for env in dev prod; do
-                  path="argocd/overlays/$env/kustomization.yaml"
-                  if ! jq -e --arg p "$path" '.scaffold | index($p)' ${golden.plan} >/dev/null; then
-                    echo "$path is not scaffold: a promoted chart version would be reverted by generate" >&2
-                    exit 1
-                  fi
-                  if jq -e --arg p "$path" '.managed | index($p)' ${golden.plan} >/dev/null; then
-                    echo "$path is still managed" >&2
-                    exit 1
-                  fi
-                done
-                touch $out
-              '';
-
-          # An overlay that names a values file which is not there fails only
-          # when Argo CD tries to sync it, which is a long way from here.
-          checks.overlay-values-files-exist = pkgs.runCommand "overlay-values-files-exist"
-            { nativeBuildInputs = [ pkgs.yq-go ]; }
-            ''
-              cd ${golden.filesDrv}/argocd/overlays
-              for k in */kustomization.yaml; do
-                dir=$(dirname "$k")
-                for f in $(yq -r '.helmCharts[].valuesFile, .helmCharts[].additionalValuesFiles[]' "$k"); do
-                  if [ ! -e "$dir/$f" ]; then
-                    echo "$k names $f, which does not exist" >&2
-                    exit 1
-                  fi
-                done
-              done
-              touch $out
-            '';
+          # Nothing in this repo names these files any more: the Application is
+          # assembled in homelab, and it asks for
+          # $values/argocd/overlays/values.app.base.yaml plus the environment's
+          # own values.app.yaml. A missing one fails at sync time, which is a
+          # long way from here, so the paths are asserted literally.
+          checks.overlay-values-files-exist = pkgs.runCommand "overlay-values-files-exist" { } ''
+            cd ${golden.filesDrv}/argocd/overlays
+            if [ ! -e values.app.base.yaml ]; then
+              echo "argocd/overlays/values.app.base.yaml is missing; every Application reads it" >&2
+              exit 1
+            fi
+            for dir in */; do
+              env="''${dir%/}"
+              if [ ! -e "$env/values.app.yaml" ]; then
+                echo "argocd/overlays/$env has no values.app.yaml" >&2
+                exit 1
+              fi
+            done
+            touch $out
+          '';
 
           # The publish workflow takes the ECR repository name from Chart.yaml,
-          # and the overlay pulls that name back out of the registry. If the two
-          # drift, Argo CD asks for a chart nobody published.
-          checks.overlay-chart-name-matches = pkgs.runCommand "overlay-chart-name-matches"
+          # and homelab's ApplicationSet asks the registry for `<service>-chart`.
+          # If the suffix goes missing, Argo CD asks for a chart nobody
+          # published.
+          checks.chart-name-has-the-suffix = pkgs.runCommand "chart-name-has-the-suffix"
             { nativeBuildInputs = [ pkgs.yq-go ]; }
             ''
               cd ${golden.filesDrv}
@@ -249,14 +227,6 @@
                 *-chart) ;;
                 *) echo "chart is named '$chart'; it must end in -chart" >&2; exit 1 ;;
               esac
-              for k in argocd/overlays/*/kustomization.yaml; do
-                for n in $(yq -r '.helmCharts[].name' "$k"); do
-                  if [ "$n" != "$chart" ]; then
-                    echo "$k asks for chart '$n' but the chart is named '$chart'" >&2
-                    exit 1
-                  fi
-                done
-              done
               touch $out
             '';
 
