@@ -244,6 +244,29 @@
               touch $out
             '';
 
+          # The Kargo project shares the workload's namespace, and this chart
+          # declares that Namespace — so Argo CD's managedNamespaceMetadata
+          # never applies to it. Drop the label here and the image pull Secret
+          # stops being minted, which surfaces as ImagePullBackOff long after
+          # anyone connects it to this file.
+          checks.kargo-namespace-keeps-the-pull-label =
+            pkgs.runCommand "kargo-namespace-keeps-the-pull-label"
+              { nativeBuildInputs = [ pkgs.yq-go ]; }
+              ''
+                f=${golden.filesDrv}/argocd/overlays/prod/values.kargo.yaml
+                got=$(yq -r '.project.namespaceLabels."fomiller.dev/ecr-pull"' "$f")
+                if [ "$got" != "true" ]; then
+                  echo "values.kargo.yaml does not label the namespace for the ECR pull Secret" >&2
+                  cat "$f" >&2
+                  exit 1
+                fi
+                # Same namespace, or Kargo rejects the project outright.
+                ns=$(yq -r '.helmCharts[] | select(.name == "kargo-project-chart") | .namespace' \
+                  ${golden.filesDrv}/argocd/overlays/prod/kustomization.yaml)
+                [ "$ns" = "$(yq -r '.project.name' "$f")" ]
+                touch $out
+              '';
+
           # A promotion that writes a path this repo does not have is a pipeline
           # that fails on its first run, hours after anyone was looking.
           checks.kargo-updates-real-paths = pkgs.runCommand "kargo-updates-real-paths"
