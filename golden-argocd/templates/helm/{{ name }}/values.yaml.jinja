@@ -20,4 +20,15 @@ imagePullSecrets: []
 ingressRoute:
   host: ""
   entryPoint: web
+
+# Plain configuration, in the normal container env shape.
+env: []
+
+# Secrets. A Secret is referenced, never inlined, so nothing sensitive appears
+# in a rendered chart or an Argo CD diff:
+#
+#   envFrom:
+#     - secretRef:
+#         name: my-app-secret
+envFrom: []
 {% endif %}

@@ -69,6 +69,25 @@
               touch $out
             '';
 
+          # Empty must emit no key at all. An empty `env:` is legal YAML but
+          # noise in every diff, and `envFrom: []` on a pod spec is worse — it
+          # reads as "no secrets by design" when it means "nobody set any".
+          checks.env-is-omitted-when-empty = pkgs.runCommand "env-is-omitted-when-empty"
+            { nativeBuildInputs = [ pkgs.kubernetes-helm ]; }
+            ''
+              chart=${golden.filesDrv}/helm/svc-go
+              if helm template t "$chart" | grep -qE '^ *(env|envFrom):'; then
+                echo "empty env/envFrom still rendered a key" >&2
+                exit 1
+              fi
+              helm template t "$chart" \
+                --set 'env[0].name=DIRECTUS_URL' --set 'env[0].value=http://x' \
+                --set 'envFrom[0].secretRef.name=app-secret' > out.yaml
+              grep -q 'name: DIRECTUS_URL' out.yaml
+              grep -q 'name: app-secret' out.yaml
+              touch $out
+            '';
+
           checks.probes-follow-health-path = pkgs.runCommand "probes-follow-health-path" { } ''
             with=${golden.filesDrv}/helm/svc-go/templates/deployment.yaml
             grep -q 'readinessProbe:' "$with"
