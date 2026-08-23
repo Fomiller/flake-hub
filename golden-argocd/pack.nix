@@ -10,6 +10,11 @@
       namespace = "";
       notifications = "";
     };
+    # `kustomize build --enable-helm` pulls each chart into a charts/ directory
+    # beside the kustomization. Argo CD does that in a throwaway workspace, but
+    # anyone running the same build locally gets a whole vendored chart tree in
+    # their working copy.
+    gitignore = [ "argocd/overlays/*/charts/" ];
   };
   registry = { };
   ownership = {
