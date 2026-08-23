@@ -21,4 +21,4 @@ plan-all:
 
 apply-all:
     doppler run --name-transformer tf-var -- \
-    terragrunt stack run --tf-path terraform --working-dir {{infraDir}} apply
+    terragrunt --non-interactive stack run --tf-path terraform --working-dir {{infraDir}} apply

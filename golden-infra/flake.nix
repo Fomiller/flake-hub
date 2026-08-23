@@ -152,7 +152,9 @@
               # the recipe without needing doppler or terragrunt on PATH.
               just --dry-run infraDir=infra/live/prod plan-all 2>&1 \
                 | grep -q -- '--working-dir infra/live/prod plan'
-              just --dry-run infraDir=infra/live/prod apply-all >/dev/null
+              # CI cannot answer terragrunt's confirmation prompt.
+              just --dry-run infraDir=infra/live/prod apply-all 2>&1 \
+                | grep -q -- '--non-interactive'
               touch $out
             '';
 
