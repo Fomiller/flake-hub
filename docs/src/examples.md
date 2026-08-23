@@ -21,10 +21,10 @@ Every pack turned on: base, github, service, infra and argocd. A 28-line
 terragrunt frame, a Helm chart under `helm/`, and the Argo CD overlay that
 deploys it.
 
-The overlays are worth a look. The Application reads a shared values file plus
-the environment's own, so a per-environment file carries only what differs. Only
-`dev` is on: `argocd.environments` decides which overlays exist, and prod is off
-by default.
+The overlay is worth a look. Its `kustomization.yaml` inflates two charts from
+ECR — the service's own and `kargo-project-chart` — reading a shared values file
+plus the environment's own, so a per-environment file carries only what differs.
+`argocd.environment` decides which overlay exists, and it is `dev` by default.
 
 The two ECR repositories are worth a look too. `flake-hub-example-service`
 holds the image and `flake-hub-example-service-chart` holds the chart, and the

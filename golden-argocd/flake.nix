@@ -38,6 +38,14 @@
             }
             pkgs
             (import ./tests/fixtures/disabled.nix);
+          # Argo CD without Kargo. A repo can deploy long before it wants a
+          # promotion pipeline, and the overlay has to render without one.
+          noKargo = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack golden-github.pack golden-service.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/nokargo.nix);
         in
         {
           packages.files = golden.filesDrv;
@@ -50,7 +58,7 @@
             let
               globbed = self.pack // {
                 ownership = self.pack.ownership // {
-                  retired = self.pack.ownership.retired ++ [ "argocd/overlays/*/kustomization.yaml" ];
+                  retired = self.pack.ownership.retired ++ [ "deploy/chart/templates/*" ];
                 };
               };
               golden = golden-engine.lib.mkGolden
@@ -63,14 +71,15 @@
             then throw "retired-glob: a glob in `retired` was accepted; it would delete nothing"
             else pkgs.runCommand "retired-glob-is-rejected" { } "touch $out";
 
-          # This pack owns nothing managed, and that is the whole point of it.
-          # A path added back to `managed` would start reverting a repo's chart
-          # on the next generate, which is the failure this change removed.
-          checks.nothing-is-managed = pkgs.runCommand "nothing-is-managed" { } ''
-            ${pkgs.lib.optionalString (self.pack.ownership.managed != [ ])
-              "echo 'golden-argocd declares managed paths; it bootstraps only' >&2; exit 1"}
-            touch $out
-          '';
+          # argocd.yaml is the only file here repo.nix owns end to end. Anything
+          # else added to `managed` would start reverting a repo's chart on the
+          # next generate, which is the failure this pack exists to avoid.
+          checks.only-argocd-yaml-is-managed =
+            pkgs.runCommand "only-argocd-yaml-is-managed" { } ''
+              ${pkgs.lib.optionalString (self.pack.ownership.managed != [ "argocd.yaml" ])
+                "echo 'golden-argocd manages more than argocd.yaml; it bootstraps the rest' >&2; exit 1"}
+              touch $out
+            '';
 
           # reconcile deletes argocd/ and helm/ before it writes anything, so a
           # template that still rendered would put the tree straight back.
@@ -90,8 +99,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 8 ]; then
-              echo "expected tree holds $found files, not 8" >&2
+            if [ "$found" -ne 10 ]; then
+              echo "expected tree holds $found files, not 10" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
@@ -189,13 +198,66 @@
             fi
             for dir in */; do
               env="''${dir%/}"
-              if [ ! -e "$env/values.app.yaml" ]; then
-                echo "argocd/overlays/$env has no values.app.yaml" >&2
-                exit 1
-              fi
+              for f in values.app.yaml values.kargo.yaml kustomization.yaml; do
+                if [ ! -e "$env/$f" ]; then
+                  echo "argocd/overlays/$env has no $f" >&2
+                  exit 1
+                fi
+              done
             done
             touch $out
           '';
+
+          # kustomize turns helmCharts[].name into a local directory, so a slash
+          # in it makes that path wrong and the build dies on a missing
+          # values.yaml. The Kargo chart lives under charts/ in the registry,
+          # which is exactly the case that tempts a slash.
+          checks.chart-names-have-no-slash = pkgs.runCommand "chart-names-have-no-slash"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              for f in ${golden.filesDrv}/argocd/overlays/*/kustomization.yaml; do
+                if yq -r '.helmCharts[].name' "$f" | grep -q '/'; then
+                  echo "$f has a slash in a chart name; kustomize cannot resolve it" >&2
+                  yq -r '.helmCharts[].name' "$f" >&2
+                  exit 1
+                fi
+              done
+              touch $out
+            '';
+
+          # The Kargo pipeline is optional, and turning it off has to leave a
+          # working overlay rather than a kustomization referencing a values
+          # file that was never written.
+          checks.kargo-off-renders-one-chart = pkgs.runCommand "kargo-off-renders-one-chart"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              drv=${noKargo.filesDrv}
+              if [ -e "$drv/argocd/overlays/dev/values.kargo.yaml" ]; then
+                echo "argocd.kargo = false still wrote values.kargo.yaml" >&2
+                exit 1
+              fi
+              charts=$(yq -r '.helmCharts | length' "$drv/argocd/overlays/dev/kustomization.yaml")
+              if [ "$charts" != "1" ]; then
+                echo "argocd.kargo = false left $charts charts in the overlay, not 1" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
+          # A promotion that writes a path this repo does not have is a pipeline
+          # that fails on its first run, hours after anyone was looking.
+          checks.kargo-updates-real-paths = pkgs.runCommand "kargo-updates-real-paths"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              cd ${golden.filesDrv}
+              for p in $(yq -r '.warehouses[].updatePaths[].path' argocd/overlays/prod/values.kargo.yaml); do
+                if [ ! -e "$p" ]; then
+                  echo "values.kargo.yaml promotes into $p, which this repo does not have" >&2
+                  exit 1
+                fi
+              done
+              touch $out
+            '';
 
           # The publish workflow takes the ECR repository name from Chart.yaml,
           # and homelab's ApplicationSet asks the registry for `<service>-chart`.
@@ -215,12 +277,34 @@
 
           # An overlay for an unselected environment must not land at all.
           checks.unselected-env-has-no-overlay = pkgs.runCommand "unselected-env-has-no-overlay" { } ''
-            if [ -e ${golden.filesDrv}/argocd/overlays/staging ]; then
-              echo "staging is not in argocd.environments but its overlay was rendered" >&2
-              exit 1
-            fi
+            for env in dev staging; do
+              if [ -e ${golden.filesDrv}/argocd/overlays/$env ]; then
+                echo "argocd.environment is prod but the $env overlay was rendered" >&2
+                exit 1
+              fi
+            done
             touch $out
           '';
+
+          # homelab's ApplicationSet reads this file out of every service repo
+          # to build the Application. A missing field there is a template error
+          # at generate time in homelab, not here.
+          checks.argocd-yaml-has-what-homelab-reads =
+            pkgs.runCommand "argocd-yaml-has-what-homelab-reads"
+              { nativeBuildInputs = [ pkgs.yq-go ]; }
+              ''
+                f=${golden.filesDrv}/argocd.yaml
+                for key in name env namespace notifications; do
+                  if [ "$(yq -r "has(\"$key\")" "$f")" != "true" ]; then
+                    echo "argocd.yaml has no $key; homelab's generator needs it" >&2
+                    cat "$f" >&2
+                    exit 1
+                  fi
+                done
+                [ "$(yq -r '.env' "$f")" = "prod" ]
+                [ "$(yq -r '.namespace' "$f")" = "svc-go" ]
+                touch $out
+              '';
 
           checks.without-service-pack-fails = pkgs.runCommand "without-service-pack-fails" { } ''
             ${pkgs.lib.optionalString

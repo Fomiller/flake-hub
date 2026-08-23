@@ -1,0 +1,39 @@
+{% if argocd.enabled and argocd.environment == "dev" %}# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
+# Kargo rewrites the chart versions below on every promotion, which is the
+# second reason this file is not regenerated: a generate would put the
+# bootstrap versions back and roll the environment backwards.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  # Nothing is published on the first commit, so this version does not exist
+  # yet. Merging to the default branch runs publish-chart.yml, and the
+  # Application syncs once that lands.
+  - name: {{ name }}-chart
+    repo: oci://695434033664.dkr.ecr.us-east-1.amazonaws.com
+    version: 0.1.0
+    releaseName: {{ name }}
+    # Shared defaults first, this environment's overrides second. On a key both
+    # files set, the later one wins.
+    valuesFile: ../values.app.base.yaml
+    additionalValuesFiles:
+      - values.app.yaml
+{% if argocd.kargo %}
+  # The promotion pipeline ships beside the workload it promotes, so a service
+  # is one Application rather than two.
+  #
+  # `charts` belongs to the repo URL, not the chart name. kustomize turns the
+  # name into a local directory, and a slash in it makes that path wrong.
+  - name: kargo-project-chart
+    repo: oci://695434033664.dkr.ecr.us-east-1.amazonaws.com/charts
+    version: 0.2.0
+    releaseName: {{ name }}-delivery
+    # Its own namespace, not the workload's. The chart names the namespace
+    # after the Kargo project, and {{ name }} already belongs to the running
+    # service.
+    namespace: {{ name }}-delivery
+    valuesFile: values.kargo.yaml
+{% endif %}
+{% endif %}

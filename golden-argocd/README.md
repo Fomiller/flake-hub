@@ -7,24 +7,36 @@ Requires `golden-service`: the bootstrap chart needs `service.port`, and this
 pack marks it required so a repo that forgets fails at eval instead of at
 render time.
 
-## It owns nothing
+## It owns one file
 
-Every path below is `scaffold`: written on the first `nix run .#generate` and
-never touched again. The pack has no `managed` files, and `nothing-is-managed`
-is the check that keeps it that way.
+| Path | Ownership | Notes |
+| --- | --- | --- |
+| `argocd.yaml` | managed | what homelab reads to build the Application |
+| `helm/<chart>/Chart.yaml` | scaffold | name and version |
+| `helm/<chart>/values.yaml` | scaffold | chart defaults |
+| `helm/<chart>/templates/*` | scaffold | deployment, service, helpers |
+| `argocd/overlays/values.app.base.yaml` | scaffold | shared chart values |
+| `argocd/overlays/<env>/values.app.yaml` | scaffold | this environment's overrides |
+| `argocd/overlays/<env>/values.kargo.yaml` | scaffold | the promotion pipeline |
+| `argocd/overlays/<env>/kustomization.yaml` | scaffold | inflates both charts |
 
-| Path | Notes |
-| --- | --- |
-| `helm/<chart>/Chart.yaml` | name and version |
-| `helm/<chart>/values.yaml` | chart defaults |
-| `helm/<chart>/templates/*` | deployment, service, helpers |
-| `argocd/overlays/values.app.base.yaml` | shared across environments |
-| `argocd/overlays/*/values.app.yaml` | per-environment overrides |
+Scaffold means written on the first `nix run .#generate` and never touched
+again. `only-argocd-yaml-is-managed` is the check that keeps the list at one.
 
 `<chart>` is the repo's `name`. The chart directory is named after it, so a
 repo that grows a second chart puts it beside the first under `helm/`.
 
-## Why nothing is managed
+## The root argocd.yaml
+
+homelab's services ApplicationSet holds a list of repo URLs and asks each one
+for this file. A service therefore declares its own destination rather than
+homelab keeping a copy that drifts.
+
+It is the one managed file here because every field in it comes from
+`repo.nix`, so regenerating it can only agree with `repo.nix`. Nothing a
+promotion writes lives in it.
+
+## Why the rest is not managed
 
 What a service deploys is the service's own decision, and it changes for
 reasons `repo.nix` never sees: a chart version a promotion tool wrote, an env
@@ -42,6 +54,11 @@ The scaffolded chart runs `hashicorp/http-echo` on `service.port` and puts a
 Service in front of it. That is deliberate: a freshly bootstrapped repo has no
 image in ECR yet, so a chart pointing at one would render fine and never pull.
 The repo swaps the image in when it has one.
+
+The overlay still names a chart version that does not exist yet. A repo has
+published nothing on its first commit, so its Application stays unsynced until
+`publish-chart.yml` runs on the default branch once. That is one CI run, not a
+manual step.
 
 For the same reason `argocd/overlays/values.app.base.yaml` pins no image. It
 carries `fullnameOverride`, `replicas`, and the `imagePullSecrets` name, and
@@ -67,24 +84,52 @@ behind `github.publishImage` and `github.publishChart`.
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
 | `argocd.enabled` | bool | no | `true` |
-| `argocd.environments` | list | no | `[ "dev" ]` |
+| `argocd.environment` | string | no | `"dev"` |
+| `argocd.kargo` | bool | no | `true` |
+| `argocd.namespace` | string | no | `""` |
+| `argocd.notifications` | string | no | `""` |
 
-`argocd.environments` picks which overlays exist. Only `dev`, `staging` and
-`prod` are supported, one static template each, for the same reason
+`argocd.environment` picks the one overlay that exists. Only `dev`, `staging`
+and `prod` are supported, one static template each, for the same reason
 `golden-infra` works that way: makejinja renders a static tree.
 
-## The overlay values are not a kustomization
+One environment, not a list, because there is one cluster. A second cluster is
+what makes dev and prod meaningfully different, and that is when this becomes a
+list again.
 
-Argo CD cannot authenticate kustomize against a private OCI registry, so a
-service is deployed from a native Helm source instead. The Application is
-assembled in homelab and reads
-`$values/argocd/overlays/values.app.base.yaml` plus the environment's own
-`values.app.yaml`. Later wins on any key both set, so the per-environment file
-carries only what actually differs.
+`argocd.namespace` empty means the repo's `name`.
 
-Nothing in the service's own repo names those paths, so
+## The overlay inflates two charts
+
+`argocd/overlays/<env>/kustomization.yaml` pulls the service's own chart and
+`kargo-project-chart` from ECR, so one Application carries both the workload
+and the pipeline that promotes it. Kargo therefore needs no directory of its
+own; its values sit beside the app's at
+`argocd/overlays/<env>/values.kargo.yaml`. `argocd.kargo = false` drops the
+second chart and that file.
+
+Two things about this shape are load-bearing:
+
+- Argo CD's repo-server needs a helm registry credential, because kustomize
+  shells out to the helm binary rather than using Argo CD's own repo-creds. See
+  homelab's `k8s/apps/cluster-resources`.
+- `helmCharts[].name` must not contain a slash. kustomize builds a local
+  directory out of the name, so `charts/kargo-project-chart` resolves wrong.
+  The `charts` segment belongs in `repo:`. `chart-names-have-no-slash` is the
+  check.
+
+Nothing in the service's repo names the values files by path, so
 `overlay-values-files-exist` asserts them literally. A missing one otherwise
 fails at sync time, which is a long way from here.
+
+## Kargo promotes into this repo
+
+`values.kargo.yaml` points the pipeline's `updatePaths` at
+`argocd/overlays/<env>/values.app.yaml` for the image tag and at the overlay's
+own `kustomization.yaml` for the chart version. A promotion is a commit to this
+repo, so the running version is readable where the rest of the deploy config
+is. `kargo-updates-real-paths` checks those paths exist in what the pack
+renders.
 
 ## The chart directory name is templated
 
