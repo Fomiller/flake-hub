@@ -1,5 +1,5 @@
 {
-  description = "golden-argocd: the chart a service ships and the workflows that publish it";
+  description = "golden-argocd: the chart and overlays a service is bootstrapped with";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -38,17 +38,6 @@
             }
             pkgs
             (import ./tests/fixtures/disabled.nix);
-
-          # A service with no health endpoint has to stay expressible, so an
-          # empty healthPath writes no probes at all rather than probing "".
-          noHealthPath =
-            let base = import ./tests/fixtures/svc.nix;
-            in golden-engine.lib.mkGolden
-              {
-                packs = [ golden-base.pack golden-github.pack golden-service.pack self.pack ];
-              }
-              pkgs
-              (base // { argocd = base.argocd // { healthPath = ""; }; });
         in
         {
           packages.files = golden.filesDrv;
@@ -74,65 +63,20 @@
             then throw "retired-glob: a glob in `retired` was accepted; it would delete nothing"
             else pkgs.runCommand "retired-glob-is-rejected" { } "touch $out";
 
-          # The route is the one thing in the chart that must not appear by
-          # default: a chart rendered with no host should produce no route at
-          # all, rather than one pointing at "".
-          checks.ingressroute-needs-a-host = pkgs.runCommand "ingressroute-needs-a-host"
-            { nativeBuildInputs = [ pkgs.kubernetes-helm ]; }
-            ''
-              chart=${golden.filesDrv}/helm/svc-go
-              if helm template t "$chart" | grep -q 'kind: IngressRoute'; then
-                echo "a chart with no ingressRoute.host still rendered a route" >&2
-                exit 1
-              fi
-              helm template t "$chart" --set ingressRoute.host=example.com \
-                | grep -q 'Host(`example.com`)'
-              touch $out
-            '';
-
-          # Empty must emit no key at all. An empty `env:` is legal YAML but
-          # noise in every diff, and `envFrom: []` on a pod spec is worse — it
-          # reads as "no secrets by design" when it means "nobody set any".
-          checks.env-is-omitted-when-empty = pkgs.runCommand "env-is-omitted-when-empty"
-            { nativeBuildInputs = [ pkgs.kubernetes-helm ]; }
-            ''
-              chart=${golden.filesDrv}/helm/svc-go
-              if helm template t "$chart" | grep -qE '^ *(env|envFrom):'; then
-                echo "empty env/envFrom still rendered a key" >&2
-                exit 1
-              fi
-              helm template t "$chart" \
-                --set 'env[0].name=DIRECTUS_URL' --set 'env[0].value=http://x' \
-                --set 'envFrom[0].secretRef.name=app-secret' > out.yaml
-              grep -q 'name: DIRECTUS_URL' out.yaml
-              grep -q 'name: app-secret' out.yaml
-              touch $out
-            '';
-
-          checks.probes-follow-health-path = pkgs.runCommand "probes-follow-health-path" { } ''
-            with=${golden.filesDrv}/helm/svc-go/templates/deployment.yaml
-            grep -q 'readinessProbe:' "$with"
-            grep -q 'livenessProbe:' "$with"
-            grep -q 'path: /healthz' "$with"
-
-            without=${noHealthPath.filesDrv}/helm/svc-go/templates/deployment.yaml
-            if grep -qE 'readinessProbe:|livenessProbe:' "$without"; then
-              echo "empty healthPath still wrote a probe" >&2
-              exit 1
-            fi
+          # This pack owns nothing managed, and that is the whole point of it.
+          # A path added back to `managed` would start reverting a repo's chart
+          # on the next generate, which is the failure this change removed.
+          checks.nothing-is-managed = pkgs.runCommand "nothing-is-managed" { } ''
+            ${pkgs.lib.optionalString (self.pack.ownership.managed != [ ])
+              "echo 'golden-argocd declares managed paths; it bootstraps only' >&2; exit 1"}
             touch $out
           '';
 
-          # reconcile deletes argocd/ and helm/ before it writes managed files,
-          # so a template that still rendered would put the tree straight back.
+          # reconcile deletes argocd/ and helm/ before it writes anything, so a
+          # template that still rendered would put the tree straight back.
           checks.disabled-renders-nothing = pkgs.runCommand "argocd-disabled-renders-nothing" { } ''
             drv=${disabled.filesDrv}
             found=$(find "$drv" \( -path "$drv/argocd/*" -o -path "$drv/helm/*" \) -type f | wc -l)
-            for f in .github/workflows/publish-chart.yml .github/workflows/publish-image.yml; do
-              if [ -e "$drv/$f" ]; then
-                found=$((found + 1))
-              fi
-            done
             if [ "$found" -ne 0 ]; then
               echo "argocd.enabled = false still rendered $found file(s)" >&2
               find "$drv" \( -path "$drv/argocd/*" -o -path "$drv/helm/*" \) -type f >&2
@@ -146,8 +90,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 11 ]; then
-              echo "expected tree holds $found files, not 11" >&2
+            if [ "$found" -ne 8 ]; then
+              echo "expected tree holds $found files, not 8" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
@@ -175,6 +119,12 @@
               helm lint ./chart
               assert_grep 'containerPort: 8080' rendered.yaml
               assert_grep 'name: test-svc-go' rendered.yaml
+
+              # The bootstrap chart has to deploy on its own, before the repo
+              # has ever built an image. A default that pointed at the repo's
+              # own ECR repository would render fine and never pull.
+              assert_grep 'hashicorp/http-echo' rendered.yaml
+              assert_grep 'listen=:8080' rendered.yaml
 
               # The chart is svc-go-chart, but no resource should say so. The
               # suffix names the artifact, not the workload. Helm's own
@@ -213,6 +163,18 @@
               assert_grep 'name: ecr-image-pull' ${golden.filesDrv}/argocd/overlays/values.app.base.yaml
               touch $out
             '';
+
+          # The base overlay must not pin an image. The chart's hello-world is
+          # what makes a freshly bootstrapped repo deploy at all, and a base
+          # value would override it with a tag nobody has pushed.
+          checks.base-overlay-pins-no-image = pkgs.runCommand "base-overlay-pins-no-image" { } ''
+            base=${golden.filesDrv}/argocd/overlays/values.app.base.yaml
+            if grep -vE '^[[:space:]]*#' "$base" | grep -q '^[[:space:]]*image:'; then
+              echo "values.app.base.yaml pins an image; the bootstrap chart can no longer deploy itself" >&2
+              exit 1
+            fi
+            touch $out
+          '';
 
           # Nothing in this repo names these files any more: the Application is
           # assembled in homelab, and it asks for
@@ -259,18 +221,6 @@
             fi
             touch $out
           '';
-
-          checks.rendered-workflows-lint = pkgs.runCommand "rendered-workflows-lint"
-            { nativeBuildInputs = [ pkgs.actionlint ]; }
-            ''
-              mkdir -p repo && cd repo
-              cp -r ${golden.filesDrv}/.github .
-              chmod -R +w .github
-              # Bare `actionlint` walks up looking for a git repo. There isn't
-              # one in a build sandbox, so name the files.
-              actionlint .github/workflows/*.yml
-              touch $out
-            '';
 
           checks.without-service-pack-fails = pkgs.runCommand "without-service-pack-fails" { } ''
             ${pkgs.lib.optionalString

@@ -1,4 +1,4 @@
-{{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
+{{- /* Written once, then it is yours. */ -}}
 apiVersion: v1
 kind: Service
 metadata:

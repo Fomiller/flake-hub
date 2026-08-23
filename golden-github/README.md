@@ -12,6 +12,8 @@ other repo.
 | `renovate.json` | managed | extends the hub's shared preset |
 | `.github/workflows/generate.yml` | managed | regenerates on PRs touching `flake.nix`, `flake.lock` or `repo.nix`; commits back only on Renovate's PRs |
 | `.github/workflows/ci.yml` | managed | one job per entry in `ci.jobs`; not emitted at all when no pack contributed one |
+| `.github/workflows/publish-image.yml` | managed | builds the image on PRs, pushes to ECR on main; off unless `github.publishImage` |
+| `.github/workflows/publish-chart.yml` | managed | packages every `helm/*/Chart.yaml` on PRs, pushes to ECR on main; off unless `github.publishChart` |
 
 ## Schema
 
@@ -22,12 +24,31 @@ other repo.
 | `github.renovate` | bool | no | `true` |
 | `github.buildAndTest` | bool | no | `true` |
 | `github.agents` | bool | no | `true` |
+| `github.publishImage` | bool | no | `false` |
+| `github.publishChart` | bool | no | `false` |
+| `github.awsRegion` | string | no | `us-east-1` |
+| `github.platforms` | list | no | `[ "linux/amd64" ]` |
 | `ci.jobs` | list | no | `[ ]` |
 | `ci.extraSteps.pre` | list | no | `[ ]` |
 | `ci.extraSteps.post` | list | no | `[ ]` |
 
 `init --packs github` seeds `github.codeowners` for you, since a repo that selects this
 pack cannot generate without it.
+
+## The publish workflows
+
+`publish-image.yml` builds the repo's container image and `publish-chart.yml`
+packages every chart under `helm/`. Both push to ECR on a push to main and
+throw the artifact away on a pull request. Both assume `github.roleToAssume`
+through OIDC.
+
+They live here rather than in `golden-argocd` because they publish artifacts
+and never write one. `golden-argocd` bootstraps a repo's chart and then leaves
+it alone, so a workflow it owned would be the one managed file left reaching
+into `helm/`.
+
+Neither ECR repository is created here. Terraform owns them — see
+`golden-infra`.
 
 ## Generated files with no header
 

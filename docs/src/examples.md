@@ -21,10 +21,10 @@ Every pack turned on: base, github, service, infra and argocd. A 28-line
 terragrunt frame, a Helm chart under `helm/`, and the Argo CD overlay that
 deploys it.
 
-The overlays are worth a look. Each one inflates the chart from OCI with a
-shared values file plus its own, so dev runs one replica while the shared base
-asks for two. Only `dev` is on: `argocd.environments` decides which overlays exist, and
-prod is off by default.
+The overlays are worth a look. The Application reads a shared values file plus
+the environment's own, so a per-environment file carries only what differs. Only
+`dev` is on: `argocd.environments` decides which overlays exist, and prod is off
+by default.
 
 The two ECR repositories are worth a look too. `flake-hub-example-service`
 holds the image and `flake-hub-example-service-chart` holds the chart, and the
@@ -38,7 +38,8 @@ the cluster runs one ApplicationSet that finds `argocd/overlays/<env>`.
 
 `deploy-infra`, `publish-chart` and `publish-image` are disabled there. They
 are wired correctly but point at an AWS account that does not exist, so
-leaving them on would only produce red runs.
+leaving them on would only produce red runs. The publish pair is off by
+default anyway — `github.publishImage` and `github.publishChart` turn them on.
 
 ## Trying it yourself
 

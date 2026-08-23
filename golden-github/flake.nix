@@ -37,6 +37,12 @@
             }
             pkgs
             (import ./tests/fixtures/gates-off.nix);
+          publish = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/publish.nix);
           evalUnits = pkgs.writeText "eval_units.nix" ''
             import ${./tests/eval_units.nix} {
               pkgs = import ${nixpkgs} { system = "${system}"; };
@@ -139,6 +145,35 @@
             test -e ${gatesOff.filesDrv}/.github/CODEOWNERS
             touch $out
           '';
+
+          # Both publish workflows are off unless a repo asks for them. A repo
+          # that ships no image has no ECR repository to push to, so a workflow
+          # that ran would fail on every push to main.
+          checks.publish-is-off-by-default = pkgs.runCommand "publish-is-off-by-default" { } ''
+            for f in publish-image.yml publish-chart.yml; do
+              if [ -e ${golden.filesDrv}/.github/workflows/$f ]; then
+                echo "$f was rendered without github.publish* set" >&2
+                exit 1
+              fi
+            done
+            touch $out
+          '';
+
+          # The workflows are only useful if the repo's own values reach the
+          # reusable workflow's inputs, and actionlint is what catches a
+          # rendered file GitHub would reject.
+          checks.publish-workflows-render = pkgs.runCommand "publish-workflows-render"
+            { nativeBuildInputs = [ pkgs.actionlint ]; }
+            ''
+              mkdir -p repo && cd repo
+              cp -r ${publish.filesDrv}/.github .
+              chmod -R +w .github
+              grep -q 'repository: publish-repo' .github/workflows/publish-image.yml
+              grep -q 'platforms: linux/amd64,linux/arm64' .github/workflows/publish-image.yml
+              grep -q 'aws-region: us-east-1' .github/workflows/publish-chart.yml
+              actionlint .github/workflows/*.yml
+              touch $out
+            '';
 
           checks.rendered-workflows-lint = pkgs.runCommand "rendered-workflows-lint"
             { nativeBuildInputs = [ pkgs.actionlint ]; }

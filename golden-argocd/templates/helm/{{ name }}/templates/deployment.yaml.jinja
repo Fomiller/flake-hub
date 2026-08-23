@@ -1,7 +1,7 @@
 {% if argocd.enabled %}
 {# Helm and Jinja share {{ }}. Everything Helm must see verbatim stays inside
    raw; only the build-time values step outside it. #}
-{% raw %}{{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
+{% raw %}{{- /* Written once, then it is yours. */ -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,34 +25,10 @@ spec:
       containers:
         - name: app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- with .Values.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
-            - containerPort: {% endraw %}{{ service.port }}{% raw %}
-          {{- /* Plain values from an overlay. Anything secret belongs in
-                 envFrom below, so it is never readable in a rendered chart or
-                 an Argo CD diff. */}}
-          {{- with .Values.env }}
-          env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.envFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-{% endraw %}
-{%- if argocd.healthPath %}
-          readinessProbe:
-            httpGet:
-              path: {{ argocd.healthPath }}
-              port: {{ service.port }}
-            periodSeconds: 5
-          {# Slower and more forgiving than readiness on purpose. Readiness
-             pulls a struggling pod out of the Service; liveness kills it, so
-             it should only fire once the pod is genuinely stuck. #}
-          livenessProbe:
-            httpGet:
-              path: {{ argocd.healthPath }}
-              port: {{ service.port }}
-            periodSeconds: 20
-            failureThreshold: 3
-{% endif %}
+            - containerPort: {% endraw %}{{ service.port }}
 {% endif %}

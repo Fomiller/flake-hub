@@ -1,13 +1,9 @@
-# ---------------------------------------------------------------------------
-# GENERATED FILE — managed by flake-hub (golden-argocd).
-# Do not edit manually: `nix run .#generate` overwrites it.
-# To change it, edit repo.nix, or the template in the pack that owns it.
-# ---------------------------------------------------------------------------
-
-apiVersion: v2
+# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
 # The -chart suffix keeps the chart's ECR repository distinct from the image's.
 # `helm push` takes the repository name from here, so the suffix has to be part
 # of the chart's own name rather than something the publish workflow appends.
+apiVersion: v2
 name: svc-go-chart
 description: A Helm chart for svc-go
 type: application

@@ -8,6 +8,10 @@
       renovate = true;
       buildAndTest = true;
       agents = true;
+      publishImage = false;
+      publishChart = false;
+      awsRegion = "us-east-1";
+      platforms = [ "linux/amd64" ];
     };
     ci = {
       jobs = [ ];
@@ -16,7 +20,14 @@
   };
   registry = { };
   ownership = {
-    managed = [ ".github/CODEOWNERS" "renovate.json" ".github/workflows/generate.yml" ".github/workflows/ci.yml" ];
+    managed = [
+      ".github/CODEOWNERS"
+      "renovate.json"
+      ".github/workflows/generate.yml"
+      ".github/workflows/ci.yml"
+      ".github/workflows/publish-image.yml"
+      ".github/workflows/publish-chart.yml"
+    ];
     # AGENTS.md is written once and is then the repo's own instructions.
     scaffold = [ "AGENTS.md" ];
     retired = [ "CODEOWNERS" ];
@@ -40,6 +51,22 @@
     "github.buildAndTest" = {
       type = "bool";
       description = "Whether to write ci.yml. False leaves the repo with no build or test workflow.";
+    };
+    "github.publishImage" = {
+      type = "bool";
+      description = "Whether to write publish-image.yml, which builds the repo's container image and pushes it to ECR.";
+    };
+    "github.publishChart" = {
+      type = "bool";
+      description = "Whether to write publish-chart.yml, which packages every helm/*/Chart.yaml and pushes it to ECR.";
+    };
+    "github.awsRegion" = {
+      type = "string";
+      description = "Region the publish workflows log in to ECR against.";
+    };
+    "github.platforms" = {
+      type = "list";
+      description = "Platforms the image is built for, passed to buildx.";
     };
     "github.agents" = {
       type = "bool";

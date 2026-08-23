@@ -1,18 +1,22 @@
 # Written once, then it is yours. `nix run .#generate` never touches it again.
 #
-# Shared chart values. Every overlay inflates the chart with this file first
-# and layers its own values.app.yaml on top, so a per-environment file only
+# Shared chart values. Every Application reads this file first and layers the
+# environment's own values.app.yaml on top, so a per-environment file only
 # carries what actually differs.
 
 fullnameOverride: svc-go
 
 replicas: 1
 
-image:
-  repository: 000000000000.dkr.ecr.us-east-1.amazonaws.com/svc-go
+# No image here on purpose. The chart's own values run a hello-world, so a
+# freshly bootstrapped repo deploys before it has ever built anything. Point
+# this at the repo's ECR image once there is one:
+#
+#   image:
+#     repository: 695434033664.dkr.ecr.us-east-1.amazonaws.com/svc-go
 
-# The registry above is private, so the kubelet needs a credential to pull
-# from it. external-secrets mints this Secret into every namespace labelled
-# for it; the name has to match what that ClusterExternalSecret creates.
+# That registry is private, so the kubelet needs a credential to pull from it.
+# external-secrets mints this Secret into every namespace labelled for it; the
+# name has to match what that ClusterExternalSecret creates.
 imagePullSecrets:
   - name: ecr-image-pull

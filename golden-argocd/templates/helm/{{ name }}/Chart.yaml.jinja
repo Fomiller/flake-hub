@@ -1,13 +1,13 @@
 {% if argocd.enabled %}
-{% include "_argocd_header.jinja" %}
-
-apiVersion: v2
+# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
 # The -chart suffix keeps the chart's ECR repository distinct from the image's.
 # `helm push` takes the repository name from here, so the suffix has to be part
 # of the chart's own name rather than something the publish workflow appends.
+apiVersion: v2
 name: {{ name }}-chart
 description: A Helm chart for {{ name }}
 type: application
-version: {{ argocd.chartVersion }}
-appVersion: "{{ argocd.chartVersion }}"
+version: 0.1.0
+appVersion: "0.1.0"
 {% endif %}
