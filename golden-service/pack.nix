@@ -12,7 +12,10 @@
     ci.jobs = [{ name = "build-test"; stepsFrom = "language"; }];
     # Build output for every language. Defaults are static data and cannot
     # branch on `language`, and an unused line costs nothing.
-    gitignore = [ "bin/" "target/" "node_modules/" "dist/" ];
+    # .astro/ is Astro's generated types. It sits here rather than in a repo's
+    # own gitignore because setting that key in repo.nix replaces this list
+    # instead of extending it.
+    gitignore = [ "bin/" "target/" "node_modules/" "dist/" ".astro/" ];
     just.recipes = [
       { name = "build"; cmdFrom = "buildCmd"; }
       { name = "test"; cmdFrom = "testCmd"; }
