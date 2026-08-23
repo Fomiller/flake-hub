@@ -50,8 +50,8 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | Class | Paths |
 |---|---|
 | managed | `helm/*/Chart.yaml`, `helm/*/templates/*`, `.github/workflows/publish-chart.yml`, `.github/workflows/publish-image.yml` |
-| scaffold | `helm/*/values.yaml`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml`, `argocd/overlays/*/kustomization.yaml` |
-| retired | `deploy/chart/Chart.yaml`, `deploy/chart/values.yaml`, `deploy/chart/templates/deployment.yaml`, `deploy/chart/templates/service.yaml`, `deploy/chart/templates/helpers.tpl` |
+| scaffold | `helm/*/values.yaml`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml` |
+| retired | `deploy/chart/Chart.yaml`, `deploy/chart/values.yaml`, `deploy/chart/templates/deployment.yaml`, `deploy/chart/templates/service.yaml`, `deploy/chart/templates/helpers.tpl`, `argocd/overlays/*/kustomization.yaml` |
 <!-- END GENERATED REFERENCE -->
 
 ## Notes
