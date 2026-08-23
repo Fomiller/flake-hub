@@ -21,6 +21,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
     chartVersion = "0.1.0";  # string, default
     enabled = true;  # bool, default
     environments = [ "dev" ];  # list, default
+    healthPath = "/healthz";  # string, default
     platforms = [ "linux/amd64" ];  # list, default
     replicas = 1;  # int, default
   };
@@ -38,6 +39,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | `argocd.chartVersion` | string | no | `"0.1.0"` | Chart version in Chart.yaml. Also seeds the version each overlay pulls, on the first generate only — after that the overlay is the promotion tool's to rewrite. |
 | `argocd.enabled` | bool | no | `true` | Whether this repo ships a chart and overlays. False deletes argocd/ and helm/. |
 | `argocd.environments` | list | no | `[ "dev" ]` | Which environments get an overlay. Only dev, staging and prod exist. |
+| `argocd.healthPath` | string | no | `"/healthz"` | HTTP path the readiness and liveness probes call, on service.port. Empty writes no probes, for a service with no health endpoint. |
 | `argocd.platforms` | list | no | `[ "linux/amd64" ]` | Platforms the image is built for, passed to buildx. |
 | `argocd.registry` | string | yes | — | OCI registry host. Both the image and the chart sit at its root. |
 | `argocd.replicas` | int | no | `1` | Replica count in the shared overlay values, before per-environment overrides. |

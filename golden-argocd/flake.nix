@@ -38,9 +38,34 @@
             }
             pkgs
             (import ./tests/fixtures/disabled.nix);
+
+          # A service with no health endpoint has to stay expressible, so an
+          # empty healthPath writes no probes at all rather than probing "".
+          noHealthPath =
+            let base = import ./tests/fixtures/svc.nix;
+            in golden-engine.lib.mkGolden
+              {
+                packs = [ golden-base.pack golden-github.pack golden-service.pack self.pack ];
+              }
+              pkgs
+              (base // { argocd = base.argocd // { healthPath = ""; }; });
         in
         {
           packages.files = golden.filesDrv;
+
+          checks.probes-follow-health-path = pkgs.runCommand "probes-follow-health-path" { } ''
+            with=${golden.filesDrv}/helm/svc-go/templates/deployment.yaml
+            grep -q 'readinessProbe:' "$with"
+            grep -q 'livenessProbe:' "$with"
+            grep -q 'path: /healthz' "$with"
+
+            without=${noHealthPath.filesDrv}/helm/svc-go/templates/deployment.yaml
+            if grep -qE 'readinessProbe:|livenessProbe:' "$without"; then
+              echo "empty healthPath still wrote a probe" >&2
+              exit 1
+            fi
+            touch $out
+          '';
 
           # reconcile deletes argocd/ and helm/ before it writes managed files,
           # so a template that still rendered would put the tree straight back.
