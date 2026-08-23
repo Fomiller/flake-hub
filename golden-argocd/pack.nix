@@ -6,27 +6,21 @@
     argocd = {
       enabled = true;
       environments = [ "dev" ];
-      replicas = 1;
-      chartVersion = "0.1.0";
-      healthPath = "/healthz";
-      awsRegion = "us-east-1";
-      platforms = [ "linux/amd64" ];
     };
   };
   registry = { };
+  # Nothing here is managed. The pack bootstraps a repo's chart and overlays
+  # and then gets out of the way: what a service deploys is the service's
+  # decision, and a managed file would revert it on whatever `nix run
+  # .#generate` happens to run next.
   ownership = {
-    # The chart directory is named after the repo. The engine substitutes
-    # {{ name }} in the template path, so the globs match one segment.
-    managed = [
-      "helm/*/Chart.yaml"
-      "helm/*/templates/*"
-      ".github/workflows/publish-chart.yml"
-      ".github/workflows/publish-image.yml"
-    ];
-    # The chart's values and the overlay values are the service's own
-    # configuration surface, so they are written once and then left alone.
+    managed = [ ];
     scaffold = [
+      # The chart directory is named after the repo. The engine substitutes
+      # {{ name }} in the template path, so the globs match one segment.
+      "helm/*/Chart.yaml"
       "helm/*/values.yaml"
+      "helm/*/templates/*"
       "argocd/overlays/values.app.base.yaml"
       "argocd/overlays/*/values.app.yaml"
     ];
@@ -60,22 +54,13 @@
   overrides = [ ];
   executable = [ ];
   schema = {
-    # Declared here, not just consumed: the chart templates need a port, and a
+    # Declared here, not just consumed: the bootstrap chart needs a port, and a
     # repo that takes this pack without golden-service should fail at eval
     # rather than at render time.
     "service.port" = {
       type = "int";
       required = true;
       description = "Port the chart's Service and Deployment expose.";
-    };
-    "argocd.registry" = {
-      type = "string";
-      required = true;
-      description = "OCI registry host. Both the image and the chart sit at its root.";
-    };
-    "argocd.awsRegion" = {
-      type = "string";
-      description = "Region the publish workflows log in to ECR against.";
     };
     "argocd.enabled" = {
       type = "bool";
@@ -84,22 +69,6 @@
     "argocd.environments" = {
       type = "list";
       description = "Which environments get an overlay. Only dev, staging and prod exist.";
-    };
-    "argocd.replicas" = {
-      type = "int";
-      description = "Replica count in the shared overlay values, before per-environment overrides.";
-    };
-    "argocd.chartVersion" = {
-      type = "string";
-      description = "Chart version in Chart.yaml. Also seeds the version each overlay pulls, on the first generate only — after that the overlay is the promotion tool's to rewrite.";
-    };
-    "argocd.healthPath" = {
-      type = "string";
-      description = "HTTP path the readiness and liveness probes call, on service.port. Empty writes no probes, for a service with no health endpoint.";
-    };
-    "argocd.platforms" = {
-      type = "list";
-      description = "Platforms the image is built for, passed to buildx.";
     };
   };
 }

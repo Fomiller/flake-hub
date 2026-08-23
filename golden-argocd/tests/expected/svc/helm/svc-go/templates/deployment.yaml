@@ -1,4 +1,4 @@
-{{- /* GENERATED FILE — managed by flake-hub (golden-argocd). */ -}}
+{{- /* Written once, then it is yours. */ -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,27 +22,9 @@ spec:
       containers:
         - name: app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- with .Values.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: 8080
-          {{- /* Plain values from an overlay. Anything secret belongs in
-                 envFrom below, so it is never readable in a rendered chart or
-                 an Argo CD diff. */}}
-          {{- with .Values.env }}
-          env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.envFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 8080
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 8080
-            periodSeconds: 20
-            failureThreshold: 3

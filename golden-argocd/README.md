@@ -1,85 +1,90 @@
 # golden-argocd
 
-The Helm chart a service ships, the Argo CD overlays that deploy it, and the
-two workflows that publish the image and the chart to ECR. Add this pack when
-the service is deployed by Argo CD.
+Bootstraps the Helm chart a service ships and the Argo CD overlay values that
+deploy it. Add this pack when the service is deployed by Argo CD.
 
-Requires `golden-service`: the chart needs `service.port`, and this pack marks
-it required so a repo that forgets fails at eval instead of at render time.
+Requires `golden-service`: the bootstrap chart needs `service.port`, and this
+pack marks it required so a repo that forgets fails at eval instead of at
+render time.
 
-## Files it owns
+## It owns nothing
 
-| Path | Class | Notes |
-| --- | --- | --- |
-| `helm/<chart>/Chart.yaml` | managed | name and version |
-| `helm/<chart>/templates/*` | managed | deployment, service, helpers |
-| `.github/workflows/publish-chart.yml` | managed | packages on PRs, pushes on main |
-| `.github/workflows/publish-image.yml` | managed | builds on PRs, pushes on main |
-| `helm/<chart>/values.yaml` | scaffold | chart defaults, written once |
-| `argocd/overlays/values.app.base.yaml` | scaffold | shared across environments |
-| `argocd/overlays/*/values.app.yaml` | scaffold | per-environment overrides |
-| `argocd/overlays/*/kustomization.yaml` | scaffold | one per selected environment |
+Every path below is `scaffold`: written on the first `nix run .#generate` and
+never touched again. The pack has no `managed` files, and `nothing-is-managed`
+is the check that keeps it that way.
+
+| Path | Notes |
+| --- | --- |
+| `helm/<chart>/Chart.yaml` | name and version |
+| `helm/<chart>/values.yaml` | chart defaults |
+| `helm/<chart>/templates/*` | deployment, service, helpers |
+| `argocd/overlays/values.app.base.yaml` | shared across environments |
+| `argocd/overlays/*/values.app.yaml` | per-environment overrides |
 
 `<chart>` is the repo's `name`. The chart directory is named after it, so a
 repo that grows a second chart puts it beside the first under `helm/`.
+
+## Why nothing is managed
+
+What a service deploys is the service's own decision, and it changes for
+reasons `repo.nix` never sees: a chart version a promotion tool wrote, an env
+var, a probe path, a second container. A managed file is regenerated from
+`repo.nix`, so every one of those edits would be reverted silently, on whatever
+`nix run .#generate` happens to run next.
+
+The cost is real. A later change to the chart's shape does not reach a repo
+that already has one. Such a change needs a note in the pack's release and a
+manual edit downstream.
+
+## The bootstrap chart is a hello-world
+
+The scaffolded chart runs `hashicorp/http-echo` on `service.port` and puts a
+Service in front of it. That is deliberate: a freshly bootstrapped repo has no
+image in ECR yet, so a chart pointing at one would render fine and never pull.
+The repo swaps the image in when it has one.
+
+For the same reason `argocd/overlays/values.app.base.yaml` pins no image. It
+carries `fullnameOverride`, `replicas`, and the `imagePullSecrets` name, and
+leaves `image` to the chart until the repo fills it in.
+`base-overlay-pins-no-image` is the check.
+
+## Two ECR repositories
+
+A service uses two: `<name>` for the image, `<name>-chart` for the chart.
+
+The `-chart` suffix is written into `Chart.yaml`'s `name`, not appended by the
+publish workflow. `helm push` reads the repository name out of the packaged
+chart, so a suffix added at push time would make the published chart disagree
+with what `helm template` renders locally. `chart-name-has-the-suffix` is the
+check.
+
+Neither repository is created by this pack. Terraform owns them — see
+`golden-infra`. The workflows that publish to them live in `golden-github`,
+behind `github.publishImage` and `github.publishChart`.
 
 ## Schema
 
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
-| `argocd.registry` | string | yes | — |
-| `argocd.awsRegion` | string | no | `us-east-1` |
 | `argocd.enabled` | bool | no | `true` |
 | `argocd.environments` | list | no | `[ "dev" ]` |
-| `argocd.replicas` | int | no | `1` |
-| `argocd.chartVersion` | string | no | `0.1.0` |
-| `argocd.platforms` | list | no | `[ "linux/amd64" ]` |
 
-## Two ECR repositories
+`argocd.environments` picks which overlays exist. Only `dev`, `staging` and
+`prod` are supported, one static template each, for the same reason
+`golden-infra` works that way: makejinja renders a static tree.
 
-A service uses two: `<name>` for the image, `<name>-chart` for the chart. Both
-sit at the registry root, so `argocd.registry` is the whole prefix.
+## The overlay values are not a kustomization
 
-The `-chart` suffix is written into `Chart.yaml`'s `name`, not appended by the
-publish workflow. `helm push` reads the repository name out of the packaged
-chart, so a suffix added at push time would make the published chart disagree
-with what `helm template` renders locally. `overlay-chart-name-matches` is the
-check that keeps the chart name and the overlays in step.
-
-Neither repository is created by this pack. Terraform owns them — see
-`golden-infra`.
-
-`argocd.environments` picks which overlays exist. Only `dev`, `staging` and `prod` are
-supported, one static template each, for the same reason `golden-infra` works
-that way: makejinja renders a static tree.
-
-## How the overlays layer
-
-Each overlay's `kustomization.yaml` inflates the chart from OCI and points at
-two values files: `../values.app.base.yaml` first, then its own
+Argo CD cannot authenticate kustomize against a private OCI registry, so a
+service is deployed from a native Helm source instead. The Application is
+assembled in homelab and reads
+`$values/argocd/overlays/values.app.base.yaml` plus the environment's own
 `values.app.yaml`. Later wins on any key both set, so the per-environment file
-carries only what actually differs. All three are scaffold — the generator
-writes them once and never again.
+carries only what actually differs.
 
-## Why the overlay kustomization is scaffold
-
-The values files are scaffold because they are the service's own configuration.
-The kustomization is scaffold for a different reason: it carries the deployed
-chart version, and a promotion tool rewrites that on every release. A managed
-file is regenerated from `repo.nix`, which would revert the promotion silently,
-on whatever `nix run .#generate` happens to run next.
-
-It has to be the whole file rather than the one line. Kustomize performs no
-substitution into `helmCharts[].version`, and `replacements` act on rendered
-resources rather than on the kustomization's own generator config, so the
-version cannot be read out of a separate file.
-
-The cost is real: a later change to the overlay's shape — a new values file, a
-different release name — does not reach a repo that already has one. Such a
-change needs a note in the pack's release and a manual edit downstream.
-
-`argocd.chartVersion` still seeds the first write. After that the file is the
-repo's.
+Nothing in the service's own repo names those paths, so
+`overlay-values-files-exist` asserts them literally. A missing one otherwise
+fails at sync time, which is a long way from here.
 
 ## The chart directory name is templated
 
@@ -92,7 +97,7 @@ contents but copies path names through untouched, so the engine substitutes
 
 Every chart template is wrapped whole in `{% raw %}`, so Helm's syntax reaches
 the file untouched. Only the build-time values step outside the raw block, by
-closing and reopening it. There are two of them, both `service.port`.
+closing and reopening it.
 
 ## The helpers file has no leading underscore
 

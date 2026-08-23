@@ -1,11 +1,10 @@
 {
-  name = "svc-go";
-  language = "go";
+  name = "publish-repo";
   github = {
     codeowners = [ "@Fomiller" ];
     roleToAssume = "arn:aws:iam::000000000000:role/github-actions";
-  };
-  argocd = {
-    environments = [ "dev" "prod" ];
+    publishImage = true;
+    publishChart = true;
+    platforms = [ "linux/amd64" "linux/arm64" ];
   };
 }
