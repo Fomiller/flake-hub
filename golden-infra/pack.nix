@@ -52,7 +52,9 @@ in
     # emits these strings with {{ recipe }}, and Jinja does not re-render data.
     just.recipes = [
       "plan-all:\n    doppler run --name-transformer tf-var -- \\\n    terragrunt stack run --tf-path terraform --working-dir {{infraDir}} plan"
-      "apply-all:\n    doppler run --name-transformer tf-var -- \\\n    terragrunt stack run --tf-path terraform --working-dir {{infraDir}} apply"
+      # --non-interactive on apply only. Without it terragrunt asks to confirm
+      # and CI answers with EOF. plan has nothing to confirm.
+      "apply-all:\n    doppler run --name-transformer tf-var -- \\\n    terragrunt --non-interactive stack run --tf-path terraform --working-dir {{infraDir}} apply"
     ];
   };
   registry = { };
