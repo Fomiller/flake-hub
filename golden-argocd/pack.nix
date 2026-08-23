@@ -43,7 +43,13 @@
       "deploy/chart/templates/deployment.yaml"
       "deploy/chart/templates/service.yaml"
       "deploy/chart/templates/helpers.tpl"
-      "argocd/overlays/*/kustomization.yaml"
+      #
+      # One entry per environment, not a glob: retired paths are unlinked
+      # literally, so a `*` here would match nothing and quietly leave the file
+      # in place.
+      "argocd/overlays/dev/kustomization.yaml"
+      "argocd/overlays/staging/kustomization.yaml"
+      "argocd/overlays/prod/kustomization.yaml"
     ];
   };
   # helm/ and argocd/ are this pack's whole surface, and both hold files the

@@ -77,6 +77,13 @@ in
       retiredButEmitted = map (p: "'${p}' is listed as retired but is still emitted by ${owners.${p}}")
         (builtins.filter (p: builtins.elem p emitted) merged.ownership.retired);
 
+      # `retired` is unlinked path by path, unlike managed and scaffold which
+      # are matched as globs against what the templates emit. A `*` here
+      # therefore deletes nothing and says nothing, which is the worst way to
+      # find out.
+      retiredGlobs = map (p: "retired entry '${p}' contains a glob; retired paths are deleted literally, so list each one")
+        (builtins.filter (p: lib.hasInfix "*" p || lib.hasInfix "?" p) merged.ownership.retired);
+
       bothClasses = map (p: "'${p}' matches both a managed and a scaffold glob; make the globs disjoint")
         (builtins.filter
           (p: lib.any (g: matches g p) merged.ownership.managed
@@ -98,7 +105,7 @@ in
         trees.trees;
 
       errors = unresolved ++ retiredButUnmanaged ++ stale ++ unclassified ++ retiredButEmitted
-        ++ bothClasses ++ staleExecutable ++ trees.errors ++ unmanagedUnderTree;
+        ++ retiredGlobs ++ bothClasses ++ staleExecutable ++ trees.errors ++ unmanagedUnderTree;
 
       byClass = cls: builtins.filter (p: classOf merged.ownership p == cls) live;
 

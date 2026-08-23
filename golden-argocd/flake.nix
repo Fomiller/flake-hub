@@ -53,6 +53,27 @@
         {
           packages.files = golden.filesDrv;
 
+          # A glob in `retired` deletes nothing and reports nothing, because
+          # retired paths are unlinked literally while managed and scaffold are
+          # matched against what the templates emit. This pack shipped one and
+          # the file it was meant to remove simply stayed.
+          checks.retired-glob-is-rejected =
+            let
+              globbed = self.pack // {
+                ownership = self.pack.ownership // {
+                  retired = self.pack.ownership.retired ++ [ "argocd/overlays/*/kustomization.yaml" ];
+                };
+              };
+              golden = golden-engine.lib.mkGolden
+                { packs = [ golden-base.pack golden-github.pack golden-service.pack globbed ]; }
+                pkgs
+                (import ./tests/fixtures/svc.nix);
+              attempt = builtins.tryEval (builtins.seq golden.filesDrv.drvPath true);
+            in
+            if attempt.success
+            then throw "retired-glob: a glob in `retired` was accepted; it would delete nothing"
+            else pkgs.runCommand "retired-glob-is-rejected" { } "touch $out";
+
           # The route is the one thing in the chart that must not appear by
           # default: a chart rendered with no host should produce no route at
           # all, rather than one pointing at "".
