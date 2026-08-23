@@ -17,4 +17,17 @@ args:
 # An overlay pulling from a private registry names its own Secret — see
 # argocd/overlays/values.app.base.yaml.
 imagePullSecrets: []
+
+# Secrets this chart creates from the cluster's secret store. The map key names
+# the Secret, so a key here is what an `envFrom` secretRef points at.
+#
+# Empty by default: rendering the chart should not need a ClusterSecretStore to
+# exist. The overlay that deploys turns them on.
+#
+#   externalSecrets:
+#     {{ name }}-application-secret:
+#       secretStore:
+#         name: aws-clustersecretstore
+#       remoteKey: dev/fomiller/homelab/{{ name }}-application-secret
+externalSecrets: {}
 {% endif %}

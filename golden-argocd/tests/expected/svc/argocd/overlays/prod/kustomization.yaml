@@ -24,7 +24,7 @@ helmCharts:
   # is one Application rather than two.
   - name: kargo-project-chart
     repo: oci://695434033664.dkr.ecr.us-east-1.amazonaws.com
-    version: 0.3.0
+    version: 0.5.0
     releaseName: svc-go
     # The workload's namespace. Kargo requires a project's name and namespace
     # to match, so the project is named after the service and lands beside it.
