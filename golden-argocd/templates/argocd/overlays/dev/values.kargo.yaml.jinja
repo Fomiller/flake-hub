@@ -1,0 +1,53 @@
+{% if argocd.enabled and argocd.kargo and argocd.environment == "dev" %}# Written once, then it is yours. `nix run .#generate` never touches it again.
+#
+# The dev promotion pipeline, rendered by kargo-project-chart. See that chart's
+# README for every field; what is here is the smallest pipeline that works.
+
+project:
+  name: {{ name }}-delivery
+  # Promotions commit back into this repo. The chart version and the image tag
+  # both live in argocd/overlays/, so a promotion touches only files a reader
+  # of this repo can find.
+  repoURL: https://github.com/Fomiller/{{ name }}.git
+
+services:
+  - name: {{ name }}
+    image:
+      repoURL: 695434033664.dkr.ecr.us-east-1.amazonaws.com/{{ name }}
+
+charts:
+  - name: {{ name }}-chart
+    chart:
+      repoURL: oci://695434033664.dkr.ecr.us-east-1.amazonaws.com/{{ name }}-chart
+
+warehouses:
+  - name: {{ name }}
+    interval: 5m0s
+    # One warehouse subscribing to both, so a promotion carries a matched pair
+    # rather than letting the image and the chart drift a release apart.
+    services: [{{ name }}]
+    charts: [{{ name }}-chart]
+    # publish-image.yml pushes the short git sha and a moving `latest`. Only
+    # the sha identifies a build, so `latest@sha256:...` would be an immutable
+    # reference under an unreadable name.
+    allowTagsRegex: '^[0-9a-f]{7,40}$'
+    updatePaths:
+      - path: argocd/overlays/dev/values.app.yaml
+        rootRelative: true
+        updates:
+          - { key: image.tag, source: {{ name }} }
+      - path: argocd/overlays/dev/kustomization.yaml
+        rootRelative: true
+        updates:
+          - { key: helmCharts.0.version, source: {{ name }}-chart }
+
+stages:
+  - name: dev
+    color: green
+    autoPromotion: true
+    warehouses: [{{ name }}]
+    env: dev
+    git:
+      repoURL: https://github.com/Fomiller/{{ name }}.git
+      branch: main
+{% endif %}

@@ -1,4 +1,4 @@
-{% if argocd.enabled and "prod" in argocd.environments %}# Written once, then it is yours. `nix run .#generate` never touches it again.
+{% if argocd.enabled and argocd.environment == "prod" %}# Written once, then it is yours. `nix run .#generate` never touches it again.
 #
 # prod overrides, layered on ../values.app.base.yaml. Only keys that differ
 # from the base belong here. The deployed image tag is the usual one:

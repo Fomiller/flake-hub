@@ -21,7 +21,10 @@ to, so deleting a line changes nothing. Required keys need a real value.
   };
   argocd = {
     enabled = true;  # bool, default
-    environments = [ "dev" ];  # list, default
+    environment = "dev";  # string, default
+    kargo = true;  # bool, default
+    namespace = "";  # string, default
+    notifications = "";  # string, default
   };
 }
 ```
@@ -31,16 +34,19 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `argocd.enabled` | bool | no | `true` | Whether this repo ships a chart and overlays. False deletes argocd/ and helm/. |
-| `argocd.environments` | list | no | `[ "dev" ]` | Which environments get an overlay. Only dev, staging and prod exist. |
+| `argocd.environment` | string | no | `"dev"` | Which environment this repo deploys to. One of dev, staging, prod. |
+| `argocd.kargo` | bool | no | `true` | Whether the overlay also installs a Kargo promotion pipeline. |
+| `argocd.namespace` | string | no | `""` | Namespace the workload deploys into. Empty means the repo name. |
+| `argocd.notifications` | string | no | `""` | Where Argo CD sends sync notifications. Empty means none. |
 | `service.port` | int | yes | — | Port the chart's Service and Deployment expose. |
 
 ## Files
 
 | Class | Paths |
 |---|---|
-| managed | _none_ |
-| scaffold | `helm/*/Chart.yaml`, `helm/*/values.yaml`, `helm/*/templates/*`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml` |
-| retired | `deploy/chart/Chart.yaml`, `deploy/chart/values.yaml`, `deploy/chart/templates/deployment.yaml`, `deploy/chart/templates/service.yaml`, `deploy/chart/templates/helpers.tpl`, `argocd/overlays/dev/kustomization.yaml`, `argocd/overlays/staging/kustomization.yaml`, `argocd/overlays/prod/kustomization.yaml` |
+| managed | `argocd.yaml` |
+| scaffold | `helm/*/Chart.yaml`, `helm/*/values.yaml`, `helm/*/templates/*`, `argocd/overlays/values.app.base.yaml`, `argocd/overlays/*/values.app.yaml`, `argocd/overlays/*/values.kargo.yaml`, `argocd/overlays/*/kustomization.yaml` |
+| retired | `deploy/chart/Chart.yaml`, `deploy/chart/values.yaml`, `deploy/chart/templates/deployment.yaml`, `deploy/chart/templates/service.yaml`, `deploy/chart/templates/helpers.tpl`, `kargo/values.yaml` |
 <!-- END GENERATED REFERENCE -->
 
 ## Notes
@@ -53,25 +59,36 @@ The chart lives at `helm/<chart>/`, where `<chart>` is the repo's `name`. The
 template path itself is `templates/helm/{{ name }}/`, which works because the
 engine substitutes path variables — see the golden-engine page.
 
-Nothing here is managed. Every file is scaffold: `Chart.yaml`, `values.yaml`,
-the chart templates, the shared `argocd/overlays/values.app.base.yaml`, and each
-environment's `values.app.yaml`. What a service deploys changes for reasons
-`repo.nix` never sees — a promoted chart version, an env var, a probe — and a
-managed file would revert every one of them on the next generate.
+One file is managed: the root `argocd.yaml`. homelab's services ApplicationSet
+holds a list of repo URLs and asks each one for that file, so a service declares
+its own name, environment and namespace instead of homelab keeping a copy.
+
+Everything else is scaffold: `Chart.yaml`, `values.yaml`, the chart templates,
+the shared `argocd/overlays/values.app.base.yaml`, and the environment's
+`values.app.yaml`, `values.kargo.yaml` and `kustomization.yaml`. What a service
+deploys changes for reasons `repo.nix` never sees — a promoted chart version, an
+env var, a probe — and a managed file would revert every one of them on the next
+generate.
 
 The scaffolded chart runs a hello-world on `service.port`, and the base overlay
 values pin no image. A fresh repo has nothing in ECR yet, so a chart pointing
 at its own image would render fine and never pull. The repo swaps the image in
 when it has one.
 
-`argocd.environments` picks which overlays exist. Only `dev`, `staging` and `prod` are
-supported, one static template each — the same constraint `golden-infra` has,
-because makejinja renders a static tree.
+`argocd.environment` picks the one overlay that exists. Only `dev`, `staging` and
+`prod` are supported, one static template each — the same constraint
+`golden-infra` has, because makejinja renders a static tree. It is one
+environment rather than a list because there is one cluster.
 
-There is no kustomization. Argo CD cannot authenticate kustomize against a
-private OCI registry, so the Application is assembled in homelab from a native
-Helm source that reads the base values first and the environment's own
-`values.app.yaml` second.
+The overlay is a kustomization that inflates two charts from ECR: the service's
+own, and `kargo-project-chart`. One Application therefore carries both the
+workload and the pipeline that promotes it, and Kargo needs no directory of its
+own. That works only because homelab gives the Argo CD repo-server a helm
+registry credential — kustomize shells out to the helm binary, which cannot see
+Argo CD's repo-creds.
+
+A promotion commits back into the service repo: the image tag into
+`values.app.yaml`, the chart version into `kustomization.yaml`.
 
 A service uses two ECR repositories: `<name>` for the image and `<name>-chart`
 for the chart. The `-chart` suffix is part of `Chart.yaml`'s `name` rather than

@@ -6,6 +6,6 @@
     roleToAssume = "arn:aws:iam::000000000000:role/github-actions";
   };
   argocd = {
-    environments = [ "dev" "prod" ];
+    environment = "prod";
   };
 }

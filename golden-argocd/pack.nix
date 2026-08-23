@@ -5,16 +5,22 @@
   defaults = {
     argocd = {
       enabled = true;
-      environments = [ "dev" ];
+      environment = "dev";
+      kargo = true;
+      namespace = "";
+      notifications = "";
     };
   };
   registry = { };
-  # Nothing here is managed. The pack bootstraps a repo's chart and overlays
-  # and then gets out of the way: what a service deploys is the service's
-  # decision, and a managed file would revert it on whatever `nix run
-  # .#generate` happens to run next.
   ownership = {
-    managed = [ ];
+    # The one managed file, and only because homelab reads it: an ApplicationSet
+    # asks each repo for argocd.yaml to build its Application. Every field in it
+    # comes from repo.nix, so regenerating it can only ever agree with repo.nix.
+    managed = [ "argocd.yaml" ];
+    # Everything a repo deploys is scaffold. What a service deploys is the
+    # service's decision, and it changes for reasons repo.nix never sees: a
+    # chart version Kargo promoted, an env var, a probe path. A managed file
+    # would revert those on whatever `nix run .#generate` runs next.
     scaffold = [
       # The chart directory is named after the repo. The engine substitutes
       # {{ name }} in the template path, so the globs match one segment.
@@ -23,27 +29,22 @@
       "helm/*/templates/*"
       "argocd/overlays/values.app.base.yaml"
       "argocd/overlays/*/values.app.yaml"
+      "argocd/overlays/*/values.kargo.yaml"
+      "argocd/overlays/*/kustomization.yaml"
     ];
     # deploy/chart was the layout before the chart moved under helm/<chart>/.
     #
-    # The overlay kustomization is newer than that and was retired for a
-    # different reason: nothing renders it. Argo CD cannot authenticate
-    # kustomize against a private OCI registry, so a service is deployed from a
-    # native Helm source that reads only the values files beside it. The
-    # kustomization was left behind looking load-bearing.
+    # kargo/values.yaml is newer: the promotion pipeline used to be its own
+    # top-level directory, installed by a second Application. It now renders
+    # from the same overlay as the workload, so the directory has nothing left
+    # in it.
     retired = [
       "deploy/chart/Chart.yaml"
       "deploy/chart/values.yaml"
       "deploy/chart/templates/deployment.yaml"
       "deploy/chart/templates/service.yaml"
       "deploy/chart/templates/helpers.tpl"
-      #
-      # One entry per environment, not a glob: retired paths are unlinked
-      # literally, so a `*` here would match nothing and quietly leave the file
-      # in place.
-      "argocd/overlays/dev/kustomization.yaml"
-      "argocd/overlays/staging/kustomization.yaml"
-      "argocd/overlays/prod/kustomization.yaml"
+      "kargo/values.yaml"
     ];
   };
   # helm/ and argocd/ are this pack's whole surface, and both hold files the
@@ -66,9 +67,21 @@
       type = "bool";
       description = "Whether this repo ships a chart and overlays. False deletes argocd/ and helm/.";
     };
-    "argocd.environments" = {
-      type = "list";
-      description = "Which environments get an overlay. Only dev, staging and prod exist.";
+    "argocd.environment" = {
+      type = "string";
+      description = "Which environment this repo deploys to. One of dev, staging, prod.";
+    };
+    "argocd.kargo" = {
+      type = "bool";
+      description = "Whether the overlay also installs a Kargo promotion pipeline.";
+    };
+    "argocd.namespace" = {
+      type = "string";
+      description = "Namespace the workload deploys into. Empty means the repo name.";
+    };
+    "argocd.notifications" = {
+      type = "string";
+      description = "Where Argo CD sends sync notifications. Empty means none.";
     };
   };
 }
