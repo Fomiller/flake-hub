@@ -26,11 +26,10 @@ helmCharts:
   - name: kargo-project-chart
     repo: oci://695434033664.dkr.ecr.us-east-1.amazonaws.com
     version: 0.3.0
-    releaseName: {{ name }}-delivery
-    # Its own namespace, not the workload's. The chart names the namespace
-    # after the Kargo project, and {{ name }} already belongs to the running
-    # service.
-    namespace: {{ name }}-delivery
+    releaseName: {{ name }}
+    # The workload's namespace. Kargo requires a project's name and namespace
+    # to match, so the project is named after the service and lands beside it.
+    namespace: {{ name }}
     valuesFile: values.kargo.yaml
 {% endif %}
 {% endif %}

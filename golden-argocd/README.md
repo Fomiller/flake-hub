@@ -118,6 +118,14 @@ Two things about this shape are load-bearing:
   chart therefore sits at the registry root, with nothing in front of its name.
   `chart-names-have-no-slash` is the check.
 
+The Kargo project runs in the workload's namespace, not one of its own. Kargo
+requires a project's name and its namespace to match, so the project is named
+after the service. That makes the Kargo chart the thing declaring the
+Namespace, and Argo CD's `managedNamespaceMetadata` only applies to a namespace
+it creates itself — so `values.kargo.yaml` carries the ECR pull label instead.
+Drop it and the pods stop pulling.
+`kargo-namespace-keeps-the-pull-label` is the check.
+
 Nothing in the service's repo names the values files by path, so
 `overlay-values-files-exist` asserts them literally. A missing one otherwise
 fails at sync time, which is a long way from here.

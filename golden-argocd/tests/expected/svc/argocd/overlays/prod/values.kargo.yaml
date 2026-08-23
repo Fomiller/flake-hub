@@ -4,7 +4,12 @@
 # README for every field; what is here is the smallest pipeline that works.
 
 project:
-  name: svc-go-delivery
+  name: svc-go
+  # This chart declares the namespace, so Argo CD's managedNamespaceMetadata
+  # never applies to it. The image pull Secret is minted into namespaces
+  # carrying this label, and without it the pods cannot pull.
+  namespaceLabels:
+    fomiller.dev/ecr-pull: "true"
   # Promotions commit back into this repo. The chart version and the image tag
   # both live in argocd/overlays/, so a promotion touches only files a reader
   # of this repo can find.
