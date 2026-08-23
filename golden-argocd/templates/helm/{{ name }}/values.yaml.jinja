@@ -13,4 +13,11 @@ image:
 # pull from ECR and name the Secret themselves — see
 # argocd/overlays/values.app.base.yaml.
 imagePullSecrets: []
+
+# No host means no IngressRoute. Routing is an environment's decision, so the
+# overlay that owns the hostname sets it — see
+# argocd/overlays/<env>/values.app.yaml.
+ingressRoute:
+  host: ""
+  entryPoint: web
 {% endif %}
