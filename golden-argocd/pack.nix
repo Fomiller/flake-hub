@@ -8,6 +8,7 @@
       environments = [ "dev" ];
       replicas = 1;
       chartVersion = "0.1.0";
+      healthPath = "/healthz";
       awsRegion = "us-east-1";
       platforms = [ "linux/amd64" ];
     };
@@ -91,6 +92,10 @@
     "argocd.chartVersion" = {
       type = "string";
       description = "Chart version in Chart.yaml. Also seeds the version each overlay pulls, on the first generate only — after that the overlay is the promotion tool's to rewrite.";
+    };
+    "argocd.healthPath" = {
+      type = "string";
+      description = "HTTP path the readiness and liveness probes call, on service.port. Empty writes no probes, for a service with no health endpoint.";
     };
     "argocd.platforms" = {
       type = "list";

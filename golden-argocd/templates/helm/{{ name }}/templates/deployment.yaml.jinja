@@ -27,4 +27,20 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: {% endraw %}{{ service.port }}
+{% if argocd.healthPath %}
+          readinessProbe:
+            httpGet:
+              path: {{ argocd.healthPath }}
+              port: {{ service.port }}
+            periodSeconds: 5
+          {# Slower and more forgiving than readiness on purpose. Readiness
+             pulls a struggling pod out of the Service; liveness kills it, so
+             it should only fire once the pod is genuinely stuck. #}
+          livenessProbe:
+            httpGet:
+              path: {{ argocd.healthPath }}
+              port: {{ service.port }}
+            periodSeconds: 20
+            failureThreshold: 3
+{% endif %}
 {% endif %}
