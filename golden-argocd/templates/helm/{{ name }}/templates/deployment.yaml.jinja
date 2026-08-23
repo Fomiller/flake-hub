@@ -26,8 +26,20 @@ spec:
         - name: app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
-            - containerPort: {% endraw %}{{ service.port }}
-{% if argocd.healthPath %}
+            - containerPort: {% endraw %}{{ service.port }}{% raw %}
+          {{- /* Plain values from an overlay. Anything secret belongs in
+                 envFrom below, so it is never readable in a rendered chart or
+                 an Argo CD diff. */}}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{% endraw %}
+{%- if argocd.healthPath %}
           readinessProbe:
             httpGet:
               path: {{ argocd.healthPath }}
