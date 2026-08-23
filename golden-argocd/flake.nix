@@ -53,6 +53,22 @@
         {
           packages.files = golden.filesDrv;
 
+          # The route is the one thing in the chart that must not appear by
+          # default: a chart rendered with no host should produce no route at
+          # all, rather than one pointing at "".
+          checks.ingressroute-needs-a-host = pkgs.runCommand "ingressroute-needs-a-host"
+            { nativeBuildInputs = [ pkgs.kubernetes-helm ]; }
+            ''
+              chart=${golden.filesDrv}/helm/svc-go
+              if helm template t "$chart" | grep -q 'kind: IngressRoute'; then
+                echo "a chart with no ingressRoute.host still rendered a route" >&2
+                exit 1
+              fi
+              helm template t "$chart" --set ingressRoute.host=example.com \
+                | grep -q 'Host(`example.com`)'
+              touch $out
+            '';
+
           checks.probes-follow-health-path = pkgs.runCommand "probes-follow-health-path" { } ''
             with=${golden.filesDrv}/helm/svc-go/templates/deployment.yaml
             grep -q 'readinessProbe:' "$with"
@@ -90,8 +106,8 @@
             # The loop only visits files the expected tree already has, so an
             # emptied expected tree would pass silently. The count is the guard.
             found=$(cd ${./tests/expected/svc} && find . -type f | wc -l)
-            if [ "$found" -ne 12 ]; then
-              echo "expected tree holds $found files, not 12" >&2
+            if [ "$found" -ne 13 ]; then
+              echo "expected tree holds $found files, not 13" >&2
               exit 1
             fi
             for f in $(cd ${./tests/expected/svc} && find . -type f | sed 's|^\./||'); do
