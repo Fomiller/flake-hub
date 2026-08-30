@@ -21,17 +21,20 @@ charts:
       repoURL: oci://695434033664.dkr.ecr.us-east-1.amazonaws.com/svc-go-chart
 
 warehouses:
-  - name: svc-go
+  # Named for the lane, not the service. Every object here already lives in
+  # this service's namespace, so repeating the name spends the whole width of
+  # a Kargo graph node on the one word that says nothing.
+  - name: release
     interval: 5m0s
     # One warehouse subscribing to both, so a promotion carries a matched pair
     # rather than letting the image and the chart drift a release apart.
     services: [svc-go]
     charts: [svc-go-chart]
-    # Two origins from one definition: `svc-go` takes the stable releases a
-    # merge to main cuts, `svc-go-rc` takes the candidates a manual run
-    # cuts off a branch. The stage below reads the primary one, so a candidate
-    # is tracked and visible without deploying anywhere until a stage asks for
-    # it by name.
+    # Two origins from one definition: `release` takes the stable versions a
+    # merge to main cuts, `release-rc` takes the candidates a manual run cuts
+    # off a branch. The stage below reads the primary one, so a candidate is
+    # tracked and visible without deploying anywhere until a stage asks for it
+    # by name.
     #
     # Mutually exclusive with allowTagsRegex — the channels carry the patterns.
     channels: [release, rc]
@@ -49,7 +52,7 @@ stages:
   - name: prod
     color: green
     autoPromotion: true
-    warehouses: [svc-go]
+    warehouses: [release]
     env: prod
     git:
       repoURL: https://github.com/Fomiller/svc-go.git
