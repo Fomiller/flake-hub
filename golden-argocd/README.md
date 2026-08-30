@@ -122,6 +122,18 @@ The Kargo project runs in the workload's namespace, not one of its own. Kargo
 requires a project's name and its namespace to match, so the project is named
 after the service.
 
+The warehouse declares two channels, so it renders twice: `<name>` takes the
+stable releases a merge to main cuts, and `<name>-rc` takes the candidates a
+manual publish run cuts off a branch. The release channel is primary, which is
+why it keeps the bare name — renaming a warehouse renames the freight origin,
+which orphans a stage's history and makes an auto-promoting stage jump to the
+newest freight from the new origin.
+
+The stage reads the primary channel. A candidate is therefore discovered and
+visible in Kargo but deploys nowhere until a stage asks for it by name with
+`channel: rc`. Adding that stage is a per-repo decision: two stages writing one
+overlay means whichever promoted last is what runs.
+
 `values.kargo.yaml` describes this service's pipeline and nothing else. The
 promotion credentials and the namespace's ECR pull label are cluster facts —
 same GitHub account, same registry, same secret stores for every service — so
