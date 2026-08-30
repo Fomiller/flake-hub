@@ -27,10 +27,14 @@ warehouses:
     # rather than letting the image and the chart drift a release apart.
     services: [{{ name }}]
     charts: [{{ name }}-chart]
-    # publish-image.yml publishes one immutable semver tag per release. The
-    # filter keeps anything pushed to the repository by hand out of the
-    # warehouse.
-    allowTagsRegex: '^[0-9]+\.[0-9]+\.[0-9]+$'
+    # Two origins from one definition: `{{ name }}` takes the stable releases a
+    # merge to main cuts, `{{ name }}-rc` takes the candidates a manual run
+    # cuts off a branch. The stage below reads the primary one, so a candidate
+    # is tracked and visible without deploying anywhere until a stage asks for
+    # it by name.
+    #
+    # Mutually exclusive with allowTagsRegex — the channels carry the patterns.
+    channels: [release, rc]
     updatePaths:
       - path: argocd/overlays/dev/values.app.yaml
         rootRelative: true
