@@ -5,10 +5,10 @@ name: Publish chart
 
 on:
   pull_request:
-    paths: [helm/**]
+    paths: [helm/**, .github/workflows/publish-chart.yml]
   push:
     branches: [main]
-    paths: [helm/**]
+    paths: [helm/**, .github/workflows/publish-chart.yml]
 
 jobs:
   chart:
