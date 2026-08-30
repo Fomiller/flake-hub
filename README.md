@@ -1,4 +1,5 @@
 # flake-hub
+https://fomiller.github.io/flake-hub/
 
 A declarative golden-file generator built on Nix flakes. Each repo you manage
 with it points at one or more "packs" — flakes that own a set of files — and
