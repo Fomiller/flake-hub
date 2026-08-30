@@ -19,8 +19,6 @@ jobs:
       id-token: write
       contents: read
     with:
-      role-to-assume: {{ github.roleToAssume }}
-      aws-region: {{ github.awsRegion }}
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
     secrets: inherit
 {% endif %}

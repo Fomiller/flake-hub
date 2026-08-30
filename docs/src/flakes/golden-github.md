@@ -19,13 +19,11 @@ to, so deleting a line changes nothing. Required keys need a real value.
   github = {
     codeowners = [ ];  # required, list
     agents = true;  # bool, default
-    awsRegion = "us-east-1";  # string, default
     buildAndTest = true;  # bool, default
     platforms = [ "linux/amd64" ];  # list, default
     publishChart = false;  # bool, default
     publishImage = false;  # bool, default
     renovate = true;  # bool, default
-    roleToAssume = "";  # string, default
   };
   ci = {
     extraSteps = {
@@ -45,14 +43,12 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | `ci.extraSteps.pre` | list | no | `[ ]` | Steps run before every CI job's own steps. |
 | `ci.jobs` | list | no | `[ ]` | Jobs added to ci.yml. Packs append to this. |
 | `github.agents` | bool | no | `true` | Whether to seed AGENTS.md. It is written once; turning this off later leaves the file alone. |
-| `github.awsRegion` | string | no | `"us-east-1"` | Region the publish workflows log in to ECR against. |
 | `github.buildAndTest` | bool | no | `true` | Whether to write ci.yml. False leaves the repo with no build or test workflow. |
 | `github.codeowners` | list | yes | — | GitHub handles or teams that own every path. Written to .github/CODEOWNERS. |
 | `github.platforms` | list | no | `[ "linux/amd64" ]` | Platforms the image is built for, passed to buildx. |
 | `github.publishChart` | bool | no | `false` | Whether to write publish-chart.yml, which packages every helm/*/Chart.yaml and pushes it to ECR. |
 | `github.publishImage` | bool | no | `false` | Whether to write publish-image.yml, which builds the repo's container image and pushes it to ECR. |
 | `github.renovate` | bool | no | `true` | Whether to write renovate.json. |
-| `github.roleToAssume` | string | no | `""` | IAM role ARN the publish workflows assume through OIDC. |
 
 ## Files
 
@@ -75,7 +71,9 @@ children is invalid YAML, so a repo with no jobs gets no `ci.yml` at all.
 `publish-image.yml` and `publish-chart.yml` are both off by default. A repo
 that ships no image has no ECR repository to push to, so a workflow that ran
 would fail on every push to main. Turn them on with `github.publishImage` and
-`github.publishChart`; both assume `github.roleToAssume` through OIDC.
+`github.publishChart`. Both authenticate through OIDC and neither names a role:
+the reusable workflow reads the `AWS_OIDC_ROLE_ARN` secret, so rotating the role
+does not regenerate a single repo.
 
 They live here rather than in `golden-argocd` because they publish artifacts and
 never write one. `golden-argocd` bootstraps a repo's chart and then leaves it

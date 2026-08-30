@@ -18,8 +18,6 @@ jobs:
       contents: read
     with:
       repository: {{ name }}
-      role-to-assume: {{ github.roleToAssume }}
-      aws-region: {{ github.awsRegion }}
       platforms: {{ github.platforms | join(",") }}
       # A pull request builds the image and throws it away. Only main pushes.
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}

@@ -4,13 +4,11 @@
   partials = ./partials;
   defaults = {
     github = {
-      roleToAssume = "";
       renovate = true;
       buildAndTest = true;
       agents = true;
       publishImage = false;
       publishChart = false;
-      awsRegion = "us-east-1";
       platforms = [ "linux/amd64" ];
     };
     ci = {
@@ -40,10 +38,6 @@
       required = true;
       description = "GitHub handles or teams that own every path. Written to .github/CODEOWNERS.";
     };
-    "github.roleToAssume" = {
-      type = "string";
-      description = "IAM role ARN the publish workflows assume through OIDC.";
-    };
     "github.renovate" = {
       type = "bool";
       description = "Whether to write renovate.json.";
@@ -59,10 +53,6 @@
     "github.publishChart" = {
       type = "bool";
       description = "Whether to write publish-chart.yml, which packages every helm/*/Chart.yaml and pushes it to ECR.";
-    };
-    "github.awsRegion" = {
-      type = "string";
-      description = "Region the publish workflows log in to ECR against.";
     };
     "github.platforms" = {
       type = "list";
