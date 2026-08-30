@@ -9,6 +9,10 @@ on:
   push:
     branches: [main]
     paths: [src/**, Dockerfile, .github/workflows/publish-image.yml]
+  # Cuts a release candidate off whatever branch it runs from, so a build can
+  # be published and deployed before it merges. Run from main and it cuts the
+  # stable release a merge would have cut.
+  workflow_dispatch:
 
 jobs:
   image:
@@ -20,8 +24,9 @@ jobs:
     with:
       repository: {{ name }}
       platforms: {{ github.platforms | join(",") }}
-      # A pull request builds the image and throws it away. Only main pushes.
-      push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
+      # A pull request builds the image and throws it away. A merge to main
+      # and a manual run both publish.
+      push: {% raw %}${{ github.event_name != 'pull_request' }}{% endraw +%}
       # One immutable tag per release, computed from conventional commits since
       # this stream's last tag. The chart is a separate stream, so only the
       # paths above count toward the bump.
@@ -29,5 +34,6 @@ jobs:
       release-paths: |
         src
         Dockerfile
+      release-rc: {% raw %}${{ github.ref_name != github.event.repository.default_branch }}{% endraw +%}
     secrets: inherit
 {% endif %}
