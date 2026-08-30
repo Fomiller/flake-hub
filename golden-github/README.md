@@ -20,13 +20,11 @@ other repo.
 | Key | Type | Required | Default |
 | --- | --- | --- | --- |
 | `github.codeowners` | list | yes | — |
-| `github.roleToAssume` | string | no | `""` |
 | `github.renovate` | bool | no | `true` |
 | `github.buildAndTest` | bool | no | `true` |
 | `github.agents` | bool | no | `true` |
 | `github.publishImage` | bool | no | `false` |
 | `github.publishChart` | bool | no | `false` |
-| `github.awsRegion` | string | no | `us-east-1` |
 | `github.platforms` | list | no | `[ "linux/amd64" ]` |
 | `ci.jobs` | list | no | `[ ]` |
 | `ci.extraSteps.pre` | list | no | `[ ]` |
@@ -39,8 +37,9 @@ pack cannot generate without it.
 
 `publish-image.yml` builds the repo's container image and `publish-chart.yml`
 packages every chart under `helm/`. Both push to ECR on a push to main and
-throw the artifact away on a pull request. Both assume `github.roleToAssume`
-through OIDC.
+throw the artifact away on a pull request. Both authenticate through OIDC, and
+neither names a role: the reusable workflow reads the `AWS_OIDC_ROLE_ARN` secret,
+so a role rotation does not touch any repo here.
 
 They live here rather than in `golden-argocd` because they publish artifacts
 and never write one. `golden-argocd` bootstraps a repo's chart and then leaves

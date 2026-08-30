@@ -170,7 +170,15 @@
               chmod -R +w .github
               grep -q 'repository: publish-repo' .github/workflows/publish-image.yml
               grep -q 'platforms: linux/amd64,linux/arm64' .github/workflows/publish-image.yml
-              grep -q 'aws-region: us-east-1' .github/workflows/publish-chart.yml
+              # Neither workflow names a role or a region. The reusable workflow
+              # reads AWS_OIDC_ROLE_ARN and defaults the region, so a rendered
+              # file that passes either has put the account back in every repo.
+              for f in publish-image.yml publish-chart.yml; do
+                if grep -q 'role-to-assume\|aws-region' ".github/workflows/$f"; then
+                  echo "$f names a role or region; both belong to the reusable workflow" >&2
+                  exit 1
+                fi
+              done
               actionlint .github/workflows/*.yml
               touch $out
             '';
