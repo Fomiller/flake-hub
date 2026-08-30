@@ -41,6 +41,15 @@ throw the artifact away on a pull request. Both authenticate through OIDC, and
 neither names a role: the reusable workflow reads the `AWS_OIDC_ROLE_ARN` secret,
 so a role rotation does not touch any repo here.
 
+Versions are computed, never committed. Each workflow asks the reusable one for
+the next semver from conventional commits since that artifact's last tag, then
+tags the release: `<name>-v0.2.0` for the image, `<chart>-v0.2.0` for the chart.
+The two are separate streams, and only commits touching an artifact's own paths
+count toward its bump, so a chart-only change does not move the image.
+
+Nothing publishes a moving tag. One immutable tag per release is what lets the
+image repository be immutable, and `golden-infra` creates it that way.
+
 They live here rather than in `golden-argocd` because they publish artifacts
 and never write one. `golden-argocd` bootstraps a repo's chart and then leaves
 it alone, so a workflow it owned would be the one managed file left reaching

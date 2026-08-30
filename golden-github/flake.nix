@@ -179,6 +179,16 @@
                   exit 1
                 fi
               done
+              # The tag prefix is what separates the image's release stream from
+              # the chart's. Rendering the bare name would make the image claim
+              # the chart's tags.
+              grep -q 'release-tag-prefix: publish-repo-v' .github/workflows/publish-image.yml
+              grep -q 'release-versioning: true' .github/workflows/publish-chart.yml
+              # A moving tag cannot be pushed twice to an immutable repository.
+              if grep -q ':latest' .github/workflows/publish-image.yml; then
+                echo "publish-image.yml publishes a moving tag" >&2
+                exit 1
+              fi
               actionlint .github/workflows/*.yml
               touch $out
             '';
