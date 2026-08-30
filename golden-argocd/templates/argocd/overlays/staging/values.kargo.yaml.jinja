@@ -27,10 +27,10 @@ warehouses:
     # rather than letting the image and the chart drift a release apart.
     services: [{{ name }}]
     charts: [{{ name }}-chart]
-    # publish-image.yml pushes the short git sha and a moving `latest`. Only
-    # the sha identifies a build, so `latest@sha256:...` would be an immutable
-    # reference under an unreadable name.
-    allowTagsRegex: '^[0-9a-f]{7,40}$'
+    # publish-image.yml publishes one immutable semver tag per release. The
+    # filter keeps anything pushed to the repository by hand out of the
+    # warehouse.
+    allowTagsRegex: '^[0-9]+\.[0-9]+\.[0-9]+$'
     updatePaths:
       - path: argocd/overlays/staging/values.app.yaml
         rootRelative: true

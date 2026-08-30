@@ -15,11 +15,19 @@ jobs:
     uses: Fomiller/gh-actions/.github/workflows/docker-ecr.yaml@main
     permissions:
       id-token: write
-      contents: read
+      # The release is tagged in this repo.
+      contents: write
     with:
       repository: {{ name }}
       platforms: {{ github.platforms | join(",") }}
       # A pull request builds the image and throws it away. Only main pushes.
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
+      # One immutable tag per release, computed from conventional commits since
+      # the last {{ name }}-v tag. The chart is a separate stream, so only the
+      # paths this workflow runs on count toward the bump.
+      release-tag-prefix: {{ name }}-v
+      release-paths: |
+        src
+        Dockerfile
     secrets: inherit
 {% endif %}

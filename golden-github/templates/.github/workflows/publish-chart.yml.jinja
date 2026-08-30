@@ -17,8 +17,13 @@ jobs:
     uses: Fomiller/gh-actions/.github/workflows/helm-ecr.yaml@main
     permissions:
       id-token: write
-      contents: read
+      # The release is tagged in this repo.
+      contents: write
     with:
       push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
+      # Each chart's version is computed from conventional commits touching its
+      # own directory, tagged <chart>-v<version>, and stamped into Chart.yaml at
+      # build time. The committed version is only the starting point.
+      release-versioning: true
     secrets: inherit
 {% endif %}
