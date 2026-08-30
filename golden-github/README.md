@@ -50,6 +50,12 @@ count toward its bump, so a chart-only change does not move the image.
 Nothing publishes a moving tag. One immutable tag per release is what lets the
 image repository be immutable, and `golden-infra` creates it that way.
 
+Both workflows also take a manual run. Off a feature branch it cuts a candidate
+— `0.2.0-rc.1`, counting up until `0.2.0` is cut — so a build can be published
+and deployed before it merges. Off the default branch it cuts the stable release
+a merge would have cut. Which one you get is the branch, never a choice at
+dispatch time, so a prerelease cannot reach main by mistake.
+
 They live here rather than in `golden-argocd` because they publish artifacts
 and never write one. `golden-argocd` bootstraps a repo's chart and then leaves
 it alone, so a workflow it owned would be the one managed file left reaching

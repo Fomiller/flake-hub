@@ -189,6 +189,13 @@
                 echo "publish-image.yml publishes a moving tag" >&2
                 exit 1
               fi
+              # A manual run off a feature branch cuts a candidate; off the
+              # default branch it cuts the stable release. Losing either half
+              # would publish a stable version from an unmerged branch.
+              for f in publish-image.yml publish-chart.yml; do
+                grep -q 'workflow_dispatch' ".github/workflows/$f"
+                grep -q 'release-rc:.*ref_name != .*default_branch' ".github/workflows/$f"
+              done
               actionlint .github/workflows/*.yml
               touch $out
             '';

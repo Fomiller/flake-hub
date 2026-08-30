@@ -9,6 +9,10 @@ on:
   push:
     branches: [main]
     paths: [helm/**, .github/workflows/publish-chart.yml]
+  # Cuts a release candidate off whatever branch it runs from, so a chart can
+  # be published and deployed before it merges. Run from main and it cuts the
+  # stable release a merge would have cut.
+  workflow_dispatch:
 
 jobs:
   chart:
@@ -20,10 +24,13 @@ jobs:
       # The release is tagged in this repo.
       contents: write
     with:
-      push: {% raw %}${{ github.event_name == 'push' }}{% endraw +%}
+      # A pull request packages the chart and throws it away. A merge to main
+      # and a manual run both publish.
+      push: {% raw %}${{ github.event_name != 'pull_request' }}{% endraw +%}
       # Each chart's version is computed from conventional commits touching its
       # own directory, tagged <chart>-v<version>, and stamped into Chart.yaml at
       # build time. The committed version is only the starting point.
       release-versioning: true
+      release-rc: {% raw %}${{ github.ref_name != github.event.repository.default_branch }}{% endraw +%}
     secrets: inherit
 {% endif %}
