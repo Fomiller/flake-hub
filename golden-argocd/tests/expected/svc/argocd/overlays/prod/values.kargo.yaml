@@ -30,14 +30,9 @@ warehouses:
     # rather than letting the image and the chart drift a release apart.
     services: [svc-go]
     charts: [svc-go-chart]
-    # Two origins from one definition: `release` takes the stable versions a
-    # merge to main cuts, `release-rc` takes the candidates a manual run cuts
-    # off a branch. The stage below reads the primary one, so a candidate is
-    # tracked and visible without deploying anywhere until a stage asks for it
-    # by name.
-    #
-    # Mutually exclusive with allowTagsRegex — the channels carry the patterns.
-    channels: [release, rc]
+    # Stable versions only. A release candidate never reaches this environment,
+    # because the warehouse it would arrive through does not accept the tag.
+    allowTagsRegex: '^[0-9]+\.[0-9]+\.[0-9]+$'
     updatePaths:
       - path: argocd/overlays/prod/values.app.yaml
         rootRelative: true
