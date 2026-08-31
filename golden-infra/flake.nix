@@ -42,8 +42,8 @@
           packages.files-dev-only = (render ./tests/fixtures/dev-only.nix).filesDrv;
           packages.files-all-envs = (render ./tests/fixtures/all-envs.nix).filesDrv;
 
-          checks.render-dev-only = snapshot "dev-only" 9 ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
-          checks.render-all-envs = snapshot "all-envs" 15 ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
+          checks.render-dev-only = snapshot "dev-only" 14 ./tests/expected/dev-only ./tests/fixtures/dev-only.nix;
+          checks.render-all-envs = snapshot "all-envs" 20 ./tests/expected/all-envs ./tests/fixtures/all-envs.nix;
 
           # infra.enabled = false has to render nothing at all: reconcile
           # deletes infra/ first and writes managed files after, so a template
@@ -67,6 +67,20 @@
           checks.disabled-plan-retires-the-tree = pkgs.runCommand "disabled-plan-retires-the-tree" { } ''
             grep -q '"retiredTrees":\["infra"\]' ${(render ./tests/fixtures/disabled.nix).plan}
             grep -q '"retiredTrees":\[\]' ${(render ./tests/fixtures/dev-only.nix).plan}
+            touch $out
+          '';
+
+          # The unit creates the repositories the publish workflows push to, so
+          # a repo that publishes neither should not carry terraform for them.
+          # infra/live/ still renders: the gate is the unit, not the pack.
+          checks.no-ecr-drops-the-unit = pkgs.runCommand "no-ecr-drops-the-unit" { } ''
+            drv=${(render ./tests/fixtures/no-ecr.nix).filesDrv}
+            found=$(find "$drv" -type f \( -path "$drv/infra/units/*" -o -path "$drv/infra/stacks/*" \) | wc -l)
+            if [ "$found" -ne 0 ]; then
+              echo "infra.ecr = false still rendered $found file(s)" >&2
+              exit 1
+            fi
+            test -e "$drv/infra/live/dev/account.hcl"
             touch $out
           '';
 
@@ -99,14 +113,13 @@
               export HOME=$TMPDIR
               cp -r ${(render ./tests/fixtures/dev-only.nix).filesDrv}/infra .
               chmod -R +w infra
+              # The unit the pack renders, in the directory terragrunt would
+              # generate it into. Copied rather than written here, so this also
+              # proves the rendered unit resolves root.hcl.
               unit=infra/live/dev/aws/common/ecr
               mkdir -p $unit
-              cat > $unit/terragrunt.hcl <<'EOF'
-              include "root" {
-                path = find_in_parent_folders("root.hcl")
-              }
-              inputs = { asset_name = "ecr" }
-              EOF
+              cp infra/units/aws/common/ecr/terragrunt.hcl $unit/
+              chmod +w $unit/terragrunt.hcl
 
               rendered() { (cd $unit && terragrunt render --json --out -); }
 

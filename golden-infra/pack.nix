@@ -17,6 +17,7 @@ in
   defaults = {
     infra = {
       enabled = true;
+      ecr = true;
       namespace = "fomiller";
       terraformVersion = ">=1.11.0";
       awsProviderVersion = ">=5.0.0";
@@ -68,14 +69,19 @@ in
       ".github/workflows/deploy-infra.yml"
     ];
     # Which stacks an environment gets is the repo's business, not the pack's.
+    # So is what the shared stack holds after the first write: the ECR unit is
+    # where a repo adds a lifecycle rule or a second repository.
     scaffold = [
       "infra/live/*/README.md"
       "infra/live/*/terragrunt.stack.hcl"
+      "infra/stacks/aws/common/terragrunt.stack.hcl"
+      "infra/units/aws/common/ecr/*"
     ];
     retired = [ ];
   };
-  # infra/units and infra/stacks are hand-written, so turning the pack off has
-  # to take them too — otherwise the repo keeps terragrunt code with no frame.
+  # The rest of infra/units and infra/stacks is hand-written, so turning the
+  # pack off has to take them too — otherwise the repo keeps terragrunt code
+  # with no frame.
   retireTrees = [
     { unless = "infra.enabled"; trees = [ "infra" ]; }
   ];
@@ -85,6 +91,10 @@ in
     "infra.enabled" = {
       type = "bool";
       description = "Whether this repo manages infrastructure. False deletes infra/ and the deploy workflow.";
+    };
+    "infra.ecr" = {
+      type = "bool";
+      description = "Whether to write the shared stack and its ECR unit, which creates the image and chart repositories the publish workflows push to.";
     };
     "infra.dopplerProject" = {
       type = "string";

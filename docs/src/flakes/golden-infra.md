@@ -19,6 +19,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
     dopplerProject = "…";  # required, string
     ownerEmail = "…";  # required, string
     awsProviderVersion = ">=5.0.0";  # string, default
+    ecr = true;  # bool, default
     enabled = true;  # bool, default
     environments = {  # one of: dev, staging, prod
       dev = {
@@ -42,6 +43,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
 |---|---|---|---|---|
 | `infra.awsProviderVersion` | string | no | `">=5.0.0"` | Version constraint written to the generated aws provider block. |
 | `infra.dopplerProject` | string | yes | — | Doppler project the deploy workflow pulls secrets from. |
+| `infra.ecr` | bool | no | `true` | Whether to write the shared stack and its ECR unit, which creates the image and chart repositories the publish workflows push to. |
 | `infra.enabled` | bool | no | `true` | Whether this repo manages infrastructure. False deletes infra/ and the deploy workflow. |
 | `infra.environments` | attrsOf (`dev`, `staging`, `prod`) | no | — | Per-environment settings. An environment exists under infra/live/ only while its enabled is true. |
 | `infra.environments.<name>.account` | string | no | `""` | AWS account ID, written to account.hcl for the units to read. |
@@ -59,7 +61,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | Class | Paths |
 |---|---|
 | managed | `infra/live/root.hcl`, `infra/live/service.hcl`, `infra/live/tags.hcl`, `infra/live/version.hcl`, `infra/live/*/account.hcl`, `.github/workflows/deploy-infra.yml` |
-| scaffold | `infra/live/*/README.md`, `infra/live/*/terragrunt.stack.hcl` |
+| scaffold | `infra/live/*/README.md`, `infra/live/*/terragrunt.stack.hcl`, `infra/stacks/aws/common/terragrunt.stack.hcl`, `infra/units/aws/common/ecr/*` |
 | retired | _none_ |
 <!-- END GENERATED REFERENCE -->
 
