@@ -125,23 +125,38 @@ after the service.
 The warehouse is called `release`, not the service name. Everything in this
 project already lives in the service's own namespace, so repeating the name in
 each node spends the whole width of a Kargo graph card on the one word that
-distinguishes nothing — and the part that does distinguish them, the channel
-suffix, is what gets truncated off the end.
+distinguishes nothing.
 
-It declares two channels, so it renders twice: `release` takes the stable
-versions a merge to main cuts, and `release-rc` takes the candidates a manual
-publish run cuts off a branch. The release channel is primary, which is why it
-keeps the bare name.
+## One warehouse, and the tag pattern decides
+
+Each environment renders exactly one warehouse. What separates dev from prod is
+the tags it accepts, not how many origins it has:
+
+| Overlay | `allowTagsRegex` accepts | Chart range |
+| --- | --- | --- |
+| `dev` | `1.2.3` and `1.2.3-rc.1` | `>=0.0.0-0` |
+| `staging`, `prod` | `1.2.3` only | default `>=0.0.0` |
+
+dev is where a candidate gets tried, so it takes whichever is newest and
+auto-promotes it. A candidate never reaches staging or prod, because the
+warehouse feeding them does not accept the tag — nothing has to remember to
+block it later.
+
+The `-0` in dev's chart range is load-bearing. A semver range with no prerelease
+part never matches a prerelease version, so the default would discover rc images
+and then find no rc chart to pair them with.
+
+kargo-project-chart also has `channels`, which splits one warehouse definition
+into several origins. That is the right tool when one environment must hold both
+lanes at once and choose between them. It is not what these overlays do, and it
+costs auto-promotion: the chart refuses `channels` alongside `autoPromotion`,
+because auto-promotion runs per origin and two origins would overwrite the same
+overlay in turn.
 
 Renaming a warehouse renames the freight origin, which orphans a stage's
 history and makes an auto-promoting stage jump to the newest freight from the
-new origin. That is survivable on a repo whose newest freight is already what
-is deployed, and it is a reason to settle these names before a service matters.
-
-The stage reads the primary channel. A candidate is therefore discovered and
-visible in Kargo but deploys nowhere until a stage asks for it by name with
-`channel: rc`. Adding that stage is a per-repo decision: two stages writing one
-overlay means whichever promoted last is what runs.
+new origin. Changing a warehouse's tag pattern does not — which is why the lane
+is one warehouse whose filter can be widened later.
 
 `values.kargo.yaml` describes this service's pipeline and nothing else. The
 promotion credentials and the namespace's ECR pull label are cluster facts —

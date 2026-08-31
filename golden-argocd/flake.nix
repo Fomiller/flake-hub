@@ -302,20 +302,59 @@
               touch $out
             '';
 
-          # dev takes both channels, which the chart refuses to combine with
-          # autoPromotion. A stage holding two origins auto-promotes the newest
-          # of each, and they overwrite this overlay in turn.
-          checks.dev-stage-reads-both-channels = pkgs.runCommand "dev-stage-reads-both-channels"
+          # dev runs one warehouse whose tag pattern takes stable versions and
+          # candidates alike. Two origins would need a promotion by hand to
+          # reach either, because the chart refuses `channels` with
+          # autoPromotion.
+          checks.dev-warehouse-takes-candidates = pkgs.runCommand "dev-warehouse-takes-candidates"
             { nativeBuildInputs = [ pkgs.yq-go ]; }
             ''
               f=${devKargo.filesDrv}/argocd/overlays/dev/values.kargo.yaml
-              got=$(yq -r '.stages[] | select(.name == "dev") | .channels | join(",")' "$f")
-              if [ "$got" != "release,rc" ]; then
-                echo "dev stage reads channels [$got], expected [release,rc]" >&2
+              if [ "$(yq -r '.warehouses | length' "$f")" != "1" ]; then
+                echo "dev renders more than one warehouse" >&2
                 exit 1
               fi
-              if [ "$(yq -r '.stages[] | select(.name == "dev") | has("autoPromotion")' "$f")" != "false" ]; then
-                echo "dev stage sets autoPromotion, which the chart rejects alongside channels" >&2
+              if [ "$(yq -r '.warehouses[0] | has("channels")' "$f")" != "false" ]; then
+                echo "dev warehouse declares channels, which splits it into two origins" >&2
+                exit 1
+              fi
+              re=$(yq -r '.warehouses[0].allowTagsRegex' "$f")
+              for tag in 1.2.3 1.2.3-rc.1 1.2.3-rc4; do
+                if ! echo "$tag" | grep -Eq "$re"; then
+                  echo "dev warehouse pattern $re rejects $tag" >&2
+                  exit 1
+                fi
+              done
+              for tag in latest 1.2.3-alpha.1 abc1234; do
+                if echo "$tag" | grep -Eq "$re"; then
+                  echo "dev warehouse pattern $re accepts $tag" >&2
+                  exit 1
+                fi
+              done
+              if [ "$(yq -r '.charts[0].chart.semverConstraint' "$f")" != ">=0.0.0-0" ]; then
+                echo "dev chart range has no prerelease part, so it hides every rc chart" >&2
+                exit 1
+              fi
+              if [ "$(yq -r '.stages[] | select(.name == "dev") | .autoPromotion' "$f")" != "true" ]; then
+                echo "dev stage does not auto-promote" >&2
+                exit 1
+              fi
+              touch $out
+            '';
+
+          # prod must not deploy a candidate. One warehouse means the tag
+          # pattern is the only thing keeping rc out.
+          checks.prod-warehouse-refuses-candidates = pkgs.runCommand "prod-warehouse-refuses-candidates"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              f=${golden.filesDrv}/argocd/overlays/prod/values.kargo.yaml
+              re=$(yq -r '.warehouses[0].allowTagsRegex' "$f")
+              if echo "1.2.3-rc.1" | grep -Eq "$re"; then
+                echo "prod warehouse pattern $re accepts a release candidate" >&2
+                exit 1
+              fi
+              if ! echo "1.2.3" | grep -Eq "$re"; then
+                echo "prod warehouse pattern $re rejects a stable version" >&2
                 exit 1
               fi
               touch $out
