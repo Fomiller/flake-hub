@@ -32,9 +32,7 @@ warehouses:
     charts: [{{ name }}-chart]
     # Two origins from one definition: `release` takes the stable versions a
     # merge to main cuts, `release-rc` takes the candidates a manual run cuts
-    # off a branch. The stage below reads the primary one, so a candidate is
-    # tracked and visible without deploying anywhere until a stage asks for it
-    # by name.
+    # off a branch. The stage below reads both.
     #
     # Mutually exclusive with allowTagsRegex — the channels carry the patterns.
     channels: [release, rc]
@@ -51,7 +49,14 @@ warehouses:
 stages:
   - name: dev
     color: green
-    autoPromotion: true
+    # Both lanes land in the one cluster this repo has, so dev takes either: a
+    # stable version, or a candidate you want to try before cutting one.
+    #
+    # That costs autoPromotion, which the chart refuses alongside `channels`.
+    # Auto-promotion runs per freight origin, so a stage holding two would
+    # promote the newest of each and they would overwrite this overlay in turn.
+    # Every promotion here is a click, releases included.
+    channels: [release, rc]
     warehouses: [release]
     env: dev
     git:
