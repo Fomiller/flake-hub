@@ -46,6 +46,15 @@
             }
             pkgs
             (import ./tests/fixtures/nokargo.nix);
+          # The dev overlay, which is the one nearly every repo renders. The
+          # golden fixture above is prod, so without this the dev templates
+          # ship untested.
+          devKargo = golden-engine.lib.mkGolden
+            {
+              packs = [ golden-base.pack golden-github.pack golden-service.pack self.pack ];
+            }
+            pkgs
+            (import ./tests/fixtures/devkargo.nix);
         in
         {
           packages.files = golden.filesDrv;
@@ -290,6 +299,25 @@
                   exit 1
                 fi
               done
+              touch $out
+            '';
+
+          # dev takes both channels, which the chart refuses to combine with
+          # autoPromotion. A stage holding two origins auto-promotes the newest
+          # of each, and they overwrite this overlay in turn.
+          checks.dev-stage-reads-both-channels = pkgs.runCommand "dev-stage-reads-both-channels"
+            { nativeBuildInputs = [ pkgs.yq-go ]; }
+            ''
+              f=${devKargo.filesDrv}/argocd/overlays/dev/values.kargo.yaml
+              got=$(yq -r '.stages[] | select(.name == "dev") | .channels | join(",")' "$f")
+              if [ "$got" != "release,rc" ]; then
+                echo "dev stage reads channels [$got], expected [release,rc]" >&2
+                exit 1
+              fi
+              if [ "$(yq -r '.stages[] | select(.name == "dev") | has("autoPromotion")' "$f")" != "false" ]; then
+                echo "dev stage sets autoPromotion, which the chart rejects alongside channels" >&2
+                exit 1
+              fi
               touch $out
             '';
 
