@@ -1,8 +1,9 @@
 # golden-infra
 
 Terragrunt scaffolding and the deploy workflow, for a repo that manages its own
-AWS infrastructure. It generates the frame only: `infra/units/**` and
-`infra/stacks/**` are yours and are never touched.
+AWS infrastructure. It generates the frame, plus one unit: the ECR
+repositories the publish workflows push to. Everything else under
+`infra/units/**` and `infra/stacks/**` is yours and is never touched.
 
 ## Files it owns
 
@@ -16,6 +17,8 @@ AWS infrastructure. It generates the frame only: `infra/units/**` and
 | `.github/workflows/deploy-infra.yml` | managed | plan on PR, apply on push, per environment |
 | `infra/live/<env>/terragrunt.stack.hcl` | scaffold | which stacks the environment gets |
 | `infra/live/<env>/README.md` | scaffold | written once, then the directory is yours |
+| `infra/stacks/aws/common/terragrunt.stack.hcl` | scaffold | the units every environment shares |
+| `infra/units/aws/common/ecr/*` | scaffold | the image and chart repositories. Off with `infra.ecr = false` |
 
 ## The layout
 
@@ -43,6 +46,7 @@ generated unit directory in git is a copy that goes stale.
 | `infra.dopplerProject` | string | yes | — |
 | `infra.ownerEmail` | string | yes | — |
 | `infra.enabled` | bool | no | `true` |
+| `infra.ecr` | bool | no | `true` |
 | `infra.namespace` | string | no | `fomiller` |
 | `infra.terraformVersion` | string | no | `>=1.11.0` |
 | `infra.awsProviderVersion` | string | no | `>=5.0.0` |
