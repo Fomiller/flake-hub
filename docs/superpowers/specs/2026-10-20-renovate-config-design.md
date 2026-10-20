@@ -163,10 +163,12 @@ credential every other project gets from the chart defaults.
 
 ## Changes outside the repo
 
-- **homelab #65.** `renovate-config.json` drops its own `extends` and leaves the
-  repo-level config to each repo's `renovate.json`. Add
-  `https://github.com/Fomiller/renovate-config.git` to the `services`
-  ApplicationSet list.
+- **homelab #65.** `renovate-config.json` extends `github>Fomiller/renovate-config`
+  and sets `ignorePresets: ["github>Fomiller/flake-hub//renovate/default"]`. A
+  consumer's `renovate.json` still extends the old preset until it picks up the
+  new `golden-github`, and the ignore keeps that from being a config error in
+  the meantime. Add `https://github.com/Fomiller/renovate-config.git` to the
+  `services` ApplicationSet list.
 - **flake-hub.** Delete `renovate/`. Close #41 without merging. `golden-github`'s
   `renovate.json` template extends only `github>Fomiller/renovate-config`. The
   README and docs pages that point at `renovate/default.json` point at the new
@@ -176,10 +178,13 @@ credential every other project gets from the chart defaults.
   bot is `fomiller-renovate-bot[bot]`, so today its PRs would fail the drift
   check instead of getting regenerated files. The template compares against
   the self-hosted bot's login.
-- **Consumers.** The two example repos pick up the new `renovate.json` the next
-  time they bump `golden-github`. Until then, their current file still extends
-  the flake-hub preset, which is gone, so Renovate reports a config error there.
-  Bump `golden-github` in both by hand once, before deleting `renovate/`.
+- **Consumers.** No hand bumps. The first `golden-github` release with the new
+  templates goes through Kargo like any other, and Renovate opens the bump PR.
+  That PR still runs the old `generate.yml`, whose actor check does not match
+  the self-hosted bot, so run `nix run .#generate` on it by hand once. Every
+  later PR regenerates on its own.
+- **Cleanup.** Once both example repos have merged that bump, drop
+  `ignorePresets` from homelab and delete `renovate/` from flake-hub.
 
 ## Risks
 
