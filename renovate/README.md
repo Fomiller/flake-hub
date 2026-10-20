@@ -17,23 +17,18 @@ Every pack ships from one repo, tagged `<pack>-<semver>`. So `github-tags` on
 `Fomiller/flake-hub` returns every pack's tags for every pin. Without filtering,
 a `golden-infra` release looks like an upgrade for a `golden-github` pin.
 
-Three pieces stop that:
+The versioning stops that. It is a `regex:` versioning whose `compatibility`
+group is the pack prefix. Renovate only offers a tag as an upgrade when its
+`compatibility` matches the current one, so a `golden-github-*` pin only ever
+moves to another `golden-github-*` tag.
 
-- The `\k<depName>` backreference in `matchStrings` makes the `?dir=` directory
-  and the tag prefix agree before a pin is considered at all. A `golden-github`
-  directory pinned to a `golden-infra` tag matches nothing, which is the right
-  answer — that pin is already wrong and Renovate should not paper over it.
-- `extractVersionTemplate` is `^{{{depName}}}-(?<version>.+)$`, which keeps only
-  the one pack's tags and strips the prefix so `semver` can compare them.
-- `depName` therefore has to stay the pack name. Setting `depNameTemplate` would
-  overwrite it with the repo slug, the anchor would become
-  `^Fomiller/flake-hub-…`, and it would match no tag at all. `packageName` is
-  what the datasource is queried with, so that is where the repo slug goes.
+`currentValue` is the full tag, prefix included, so the update rewrites the
+whole tag and never leaves a stale prefix behind.
 
-`tests/preset_test.py` runs the regex and resolves the templates the way
-Renovate does, including that overwrite. Renovate's regexes are JS, so the test
-translates the two constructs Python spells differently rather than keeping a
-second copy of the pattern that could drift.
+Renovate runs these patterns through RE2, which has no backreferences. A
+`\k<name>` in `matchStrings` fails validation and Renovate skips the repo with
+a config error. `tests/preset_test.py` runs every pattern through RE2 for that
+reason.
 
 ## The nix manager is off
 
