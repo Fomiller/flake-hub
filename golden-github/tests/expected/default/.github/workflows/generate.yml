@@ -23,5 +23,5 @@ jobs:
     permissions:
       contents: write
     with:
-      commit-back: ${{ github.actor == 'renovate[bot]' }}
+      commit-back: ${{ github.actor == 'fomiller-renovate-bot[bot]' }}
     secrets: inherit

@@ -31,7 +31,7 @@ Renovate updates pins. It does not know how to regenerate files, and teaching it
 would mean giving it the whole engine.
 
 Instead the consumer's `generate.yml` runs on the PR, regenerates, and commits
-the result back — but only when the PR author is `renovate[bot]`. On a human PR
+the result back — but only when the PR author is `fomiller-renovate-bot[bot]`. On a human PR
 it reports drift without committing.
 
 The commit-back uses the workflow's `GITHUB_TOKEN`. Pushes made with that token
