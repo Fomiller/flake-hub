@@ -68,11 +68,16 @@ wrong, either `repo.nix` is wrong or the pack's template is.
 
 ## What happens on a pull request
 
-The generated `.github/workflows/generate.yml` runs on any PR that touches
-`flake.nix`, `flake.lock` or `repo.nix`. It regenerates and:
+The generated `.github/workflows/generate.yml` runs on every push to main and
+every PR. Drift Check regenerates and fails if any file changed. Regenerate then
+pushes the fix to the branch, and the checks run again on that commit.
 
-- on a Renovate PR, commits the result back, so the version bump and the file
-  changes land together;
-- on a human PR, reports the drift without committing.
+On a PR from a fork, nothing is pushed. Run `nix run .#generate` and commit.
 
-A PR that changes neither pins nor `repo.nix` does not run it at all.
+The workflow needs two repo secrets. Set them once per repo:
+
+```sh
+gh secret set RENOVATE_APP_ID -R Fomiller/<repo> --body 5396835
+doppler secrets get RENOVATE_PRIVATE_KEY --project renovate --config dev --plain \
+  | gh secret set RENOVATE_APP_PRIVATE_KEY -R Fomiller/<repo>
+```

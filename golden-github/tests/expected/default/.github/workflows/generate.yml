@@ -6,22 +6,20 @@
 
 name: Generate
 
+# No path filter: Drift Check also has to catch a hand-edit to a generated file.
 on:
+  push:
+    branches: [main]
   pull_request:
-    paths:
-      - flake.nix
-      - flake.lock
-      - repo.nix
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  generate:
-    uses: Fomiller/gh-actions/.github/workflows/nix-generate.yaml@main
+  golden:
+    uses: Fomiller/gh-actions/.github/workflows/golden-generate.yaml@main
     permissions:
-      contents: write
-    with:
-      commit-back: ${{ github.actor == 'fomiller-renovate-bot[bot]' }}
+      contents: read
     secrets: inherit

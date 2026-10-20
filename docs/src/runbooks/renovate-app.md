@@ -69,6 +69,10 @@ Self-hosted Renovate cannot use the App key directly. Each run first mints an
 installation token from the key, using homelab
 `k8s/apps/renovate/mint-token.js`, and hands that token to Renovate.
 
+Each consumer repo also holds the key as the `RENOVATE_APP_PRIVATE_KEY` secret,
+next to `RENOVATE_APP_ID`. Its generate workflow uses them to push regenerated
+files. See getting-started for the commands.
+
 ## 7. Verify
 
 Once the cluster job runs, it should open a PR on a repo whose pins are behind.
