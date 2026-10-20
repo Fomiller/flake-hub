@@ -100,6 +100,18 @@ def test_catalog_tag_for_another_pack_is_rejected(tmp_path):
     assert not (work / "flake.nix").exists()
 
 
+def test_catalog_tag_for_a_longer_pack_name_is_rejected(tmp_path):
+    catalog = tmp_path / "catalog"
+    shutil.copytree(CATALOG, catalog)
+    f = catalog / "golden-base.yaml"
+    f.write_text(f.read_text().replace("version: golden-base-", "version: golden-base-mesh-"))
+    work = tmp_path / "work"
+    work.mkdir()
+    r = run(work, "--name", "foo", catalog=catalog, expect_fail=True)
+    assert "golden-base-mesh" in r.stderr
+    assert not (work / "flake.nix").exists()
+
+
 def test_missing_catalog_file_is_an_error(tmp_path):
     catalog = tmp_path / "catalog"
     shutil.copytree(CATALOG, catalog)

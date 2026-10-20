@@ -34,9 +34,10 @@ def promoted_version(catalog: str, pack: str) -> str:
     if not m:
         sys.exit(f"init: no `version:` line in {url}")
     tag = m.group(1)
-    if not tag.startswith(f"{pack}-"):
-        sys.exit(f"init: {url} names tag {tag}, which is not a {pack} tag")
-    return tag.removeprefix(f"{pack}-")
+    v = re.fullmatch(rf"{re.escape(pack)}-(\d+\.\d+\.\d+)", tag)
+    if not v:
+        sys.exit(f"init: {url} names tag {tag}, which is not a {pack} release tag")
+    return v.group(1)
 
 
 # No `follows` lines. A consumer reads only `<pack>.pack`, which is a plain
