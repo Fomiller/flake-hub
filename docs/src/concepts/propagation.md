@@ -7,9 +7,9 @@ flowchart TD
     A[merge to main in flake-hub] --> B[release workflow tags pack-x.y.z]
     B --> C[Kargo promotes it in renovate-config]
     C --> C2[Renovate sees the new pin]
-    C2 --> D[PR on each pinned repo: flake.nix + flake.lock]
-    D --> E[the repo's generate.yml regenerates]
-    E --> F[bot commits the file changes into the same PR]
+    C2 --> D[PR on each pinned repo: the flake.nix pin only]
+    D --> E[the repo's generate.yml relocks and regenerates]
+    E --> F[bot commits flake.lock and the files into the same PR]
     F --> G[review sees pins and files together]
 ```
 
@@ -34,12 +34,14 @@ A new tag does not reach repos on its own. Renovate reads pack versions from
 
 ## Why generation runs in the consumer
 
-Renovate updates pins. It does not know how to regenerate files, and teaching it
-would mean giving it the whole engine.
+Renovate changes only the pin in `flake.nix`. It does not touch `flake.lock` or
+any generated file. Teaching it to regenerate would mean giving it the whole
+engine.
 
-Instead the consumer's `generate.yml` runs on the PR, regenerates, and commits
-the result back, but only when the PR author is `fomiller-renovate-bot[bot]`.
-On a human PR it reports drift without committing.
+Instead the consumer's `generate.yml` runs on the PR, updates `flake.lock`,
+regenerates, and commits the result back. It commits only when `github.actor`,
+the account that triggered the run, is `fomiller-renovate-bot[bot]`. On any
+other run it reports drift without committing.
 
 The commit-back uses the workflow's `GITHUB_TOKEN`. Pushes made with that token
 do not trigger further workflow runs, which is the loop prevention: the bot

@@ -9,9 +9,10 @@ version and its own tag, so a repo picks the pieces it wants and upgrades them
 one at a time. `golden-engine` does the work; the `golden-*` packs supply
 templates, defaults and ownership rules.
 
-When a pack is released, Renovate opens a PR on every repo pinned to it. The
-repo's own workflow regenerates the files in that PR, so the diff a reviewer
-sees is the actual change, not a version bump they have to imagine.
+When a pack is promoted in renovate-config's Kargo project, Renovate opens a PR
+on every repo pinned to it. A release alone does not. The repo's own workflow
+regenerates the files in that PR, so the diff a reviewer sees is the actual
+change, not a version bump they have to imagine.
 
 ## The flakes
 
@@ -33,6 +34,7 @@ per pack.
 ## The three files a repo holds
 
 - `flake.nix` — the pins, and the `mkGolden` call listing which packs apply.
-- `flake.lock` — what Renovate updates.
+- `flake.lock` — the locked inputs. Renovate changes only the pin in
+  `flake.nix`. The lock comes from the generate workflow's commit on the PR.
 - `repo.nix` — the repo's own configuration: its name, its owners, its
   language, its environments. Everything else is generated from it.

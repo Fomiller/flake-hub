@@ -1,0 +1,5 @@
+# Test data for init_test.py. Versions differ from pack-versions.nix on purpose.
+repo: github.com/Fomiller/flake-hub
+dir: golden-service
+sourceUrl: https://github.com/Fomiller/flake-hub
+version: golden-service-0.2.5

@@ -37,8 +37,10 @@ Subscribe to no events.
 `autodiscoverFilter` in homelab `k8s/apps/renovate/renovate-config.json` limits
 which repos Renovate touches, so the install scope does not need to.
 
-Note the **App ID** from the app's settings page, and the **Installation ID**
-from the URL after installing (`.../installations/<id>`).
+Note the **Client ID** from the app's settings page. `mint-token.js` uses it as
+the JWT issuer. Note the **Installation ID** from the URL after installing
+(`.../installations/<id>`). The **App ID** is on the same settings page; keep
+it for reference.
 
 ## 4. Private key
 
@@ -53,7 +55,7 @@ project `renovate`, config `dev`:
 
 | Doppler secret | Value |
 | --- | --- |
-| `RENOVATE_APP_ID` | the App ID |
+| `RENOVATE_APP_ID` | the App ID, for reference; not read by the cluster |
 | `RENOVATE_CLIENT_ID` | the Client ID |
 | `RENOVATE_INSTALLATION_ID` | the Installation ID |
 | `RENOVATE_PRIVATE_KEY` | the full contents of the `.pem`, newlines included |

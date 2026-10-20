@@ -1,14 +1,17 @@
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 INIT = Path(__file__).parent.parent / "init.py"
 VERSIONS = Path(__file__).parent / "fixtures" / "pack-versions.nix"
+CATALOG = Path(__file__).parent / "fixtures" / "catalog"
 
 
-def run(cwd, *args, expect_fail=False):
+def run(cwd, *args, catalog=CATALOG, expect_fail=False):
     r = subprocess.run(
-        [sys.executable, str(INIT), "--versions", str(VERSIONS), *args],
+        [sys.executable, str(INIT), "--versions", str(VERSIONS),
+         "--catalog", catalog.resolve().as_uri(), *args],
         cwd=cwd, capture_output=True, text=True,
     )
     if expect_fail:
@@ -74,3 +77,35 @@ def test_refuses_to_clobber_existing_files(tmp_path):
     (tmp_path / "repo.nix").write_text("{ name = \"mine\"; }\n")
     run(tmp_path, "--name", "foo", expect_fail=True)
     assert (tmp_path / "repo.nix").read_text() == "{ name = \"mine\"; }\n"
+
+
+def test_pins_come_from_the_catalog(tmp_path):
+    run(tmp_path, "--name", "foo", "--packs", "github")
+    flake = (tmp_path / "flake.nix").read_text()
+    assert "ref=refs/tags/golden-base-0.4.2" in flake
+    assert "ref=refs/tags/golden-engine-0.3.1" in flake
+    assert "ref=refs/tags/golden-github-0.7.3" in flake
+    assert "0.1.0" not in flake
+
+
+def test_catalog_tag_for_another_pack_is_rejected(tmp_path):
+    catalog = tmp_path / "catalog"
+    shutil.copytree(CATALOG, catalog)
+    f = catalog / "golden-base.yaml"
+    f.write_text(f.read_text().replace("version: golden-base-", "version: golden-github-"))
+    work = tmp_path / "work"
+    work.mkdir()
+    r = run(work, "--name", "foo", catalog=catalog, expect_fail=True)
+    assert "golden-base" in r.stderr
+    assert not (work / "flake.nix").exists()
+
+
+def test_missing_catalog_file_is_an_error(tmp_path):
+    catalog = tmp_path / "catalog"
+    shutil.copytree(CATALOG, catalog)
+    (catalog / "golden-github.yaml").unlink()
+    work = tmp_path / "work"
+    work.mkdir()
+    r = run(work, "--name", "foo", "--packs", "github", catalog=catalog, expect_fail=True)
+    assert "golden-github" in r.stderr
+    assert not (work / "flake.nix").exists()

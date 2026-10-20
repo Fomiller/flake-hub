@@ -85,5 +85,8 @@ snapshot you wrote, because the snapshot only checks files it knows about.
 - [ ] a check asserting whatever the pack gates off
 - [ ] an entry in `.github/workflows/ci.yaml`'s `flake-dirs`
 - [ ] an entry in `.github/workflows/release.yaml`'s `flake-dirs`
-- [ ] the pack and its version in `golden-base/pack-versions.nix`
+- [ ] the pack in `golden-base/pack-versions.nix`, so `init` knows it exists
+- [ ] a version file and Kargo warehouse in
+      [renovate-config](https://github.com/Fomiller/renovate-config); `init`
+      and Renovate both pin to the promoted version there
 - [ ] a page under `docs/src/flakes/` with the generated-region markers
