@@ -145,7 +145,7 @@ in
         };
         stateBucket = {
           type = "string";
-          description = "Overrides the derived <namespace>-<env>-terraform-state. infra/live/variables.hcl still wins.";
+          description = "Overrides the derived <namespace>-terraform-state-<env>. infra/live/variables.hcl still wins.";
         };
       };
     };

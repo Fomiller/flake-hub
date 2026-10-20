@@ -51,7 +51,7 @@ to, so deleting a line changes nothing. Required keys need a real value.
 | `infra.environments.<name>.profile` | string | no | `""` | Local AWS profile name, for running terragrunt by hand. |
 | `infra.environments.<name>.region` | string | no | `"us-east-1"` | Region for the AWS provider, the state backend and the deploy job. |
 | `infra.environments.<name>.rolePrefix` | string | no | `""` | Role-name base the units build their OIDC ARNs from. |
-| `infra.environments.<name>.stateBucket` | string | no | `""` | Overrides the derived <namespace>-<env>-terraform-state. infra/live/variables.hcl still wins. |
+| `infra.environments.<name>.stateBucket` | string | no | `""` | Overrides the derived <namespace>-terraform-state-<env>. infra/live/variables.hcl still wins. |
 | `infra.namespace` | string | no | `"fomiller"` | Prefix on resource names, so two repos in one account do not collide. |
 | `infra.ownerEmail` | string | yes | — | Goes on every resource as an owner tag. infra/live/variables.hcl can override it per tree. |
 | `infra.terraformVersion` | string | no | `">=1.11.0"` | Version constraint written to the generated required_version. |
@@ -104,7 +104,7 @@ file wins.
 
 Order for the bucket: `variables.hcl`, then the environment's `stateBucket`
 (which `account.hcl` carries), then a derived
-`<namespace>-<env>-terraform-state`. Order for the email: `variables.hcl`, then
+`<namespace>-terraform-state-<env>`. Order for the email: `variables.hcl`, then
 `infra.ownerEmail`.
 
 Both overrides are resolved in `root.hcl`, not in `tags.hcl`. Inside a config

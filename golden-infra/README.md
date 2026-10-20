@@ -70,7 +70,7 @@ starts above that file's own directory, so `tags.hcl` cannot see a sibling
 `variables.hcl`.
 
 Bucket order: `variables.hcl`, the environment's `stateBucket` (carried by
-`account.hcl`), then a derived `<namespace>-<env>-terraform-state`. Email
+`account.hcl`), then a derived `<namespace>-terraform-state-<env>`. Email
 order: `variables.hcl`, then `infra.ownerEmail`.
 
 ## The state key

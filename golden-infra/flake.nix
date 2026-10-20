@@ -125,7 +125,7 @@
 
               # No variables.hcl: the fixture sets no infra.stateBucket either,
               # so both fall through to the derived name and the repo.nix email.
-              rendered | grep -q '"bucket":"fomiller-dev-terraform-state"'
+              rendered | grep -q '"bucket":"fomiller-terraform-state-dev"'
               rendered | grep -q 'forrestmillerj@gmail.com'
 
               cat > infra/live/variables.hcl <<'EOF'
