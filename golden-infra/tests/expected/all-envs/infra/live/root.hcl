@@ -28,7 +28,7 @@ locals {
   state_bucket = coalesce(
     try(local.variable_vars.locals.bucket, null),
     try(local.account_vars.locals.state_bucket, null),
-    "${local.service_vars.locals.namespace}-${local.environment}-terraform-state"
+    "${local.service_vars.locals.namespace}-terraform-state-${local.environment}"
   )
 
   # The override has to happen here, not in tags.hcl: find_in_parent_folders()
