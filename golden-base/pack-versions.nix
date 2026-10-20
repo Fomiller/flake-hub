@@ -4,7 +4,7 @@
   golden-base = "0.7.0";
   golden-github = "0.10.0";
   golden-service = "0.6.0";
-  golden-infra = "0.6.0";
+  golden-infra = "0.7.0";
   golden-argocd = "0.20.0";
   golden-docs = "0.2.0";
 }
