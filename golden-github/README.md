@@ -9,7 +9,7 @@ other repo.
 | Path | Class | Notes |
 | --- | --- | --- |
 | `CODEOWNERS` | managed | `* <owners>`, from `github.codeowners` |
-| `renovate.json` | managed | extends the hub's shared preset |
+| `renovate.json` | managed | extends `github>Fomiller/renovate-config` |
 | `.github/workflows/generate.yml` | managed | regenerates on PRs touching `flake.nix`, `flake.lock` or `repo.nix`; commits back only on Renovate's PRs |
 | `.github/workflows/ci.yml` | managed | one job per entry in `ci.jobs`; not emitted at all when no pack contributed one |
 | `.github/workflows/publish-image.yml` | managed | builds the image on PRs, pushes to ECR on main; off unless `github.publishImage` |
