@@ -592,10 +592,10 @@ Check `nix-flake-check.yaml`'s `flake-dirs` input accepts `"."` by reading it: `
 
 Cover, in this order and briefly: what the repo is; how a release flows (tag, freight, promote, version file, Renovate PR); how to promote (`kargo promote --project renovate-config --stage release --freight <id>`, or the UI); how to add a pack (version file plus `gitRepos`, `warehouses` and stage entries, all named after the pack); why only `custom.regex` runs; why `version` is the full tag; how to validate locally (`nix flake check`, the validator command from Task 2).
 
-- [ ] **Step 10: Check for other org names, then commit**
+- [ ] **Step 10: Check every GitHub owner named is an expected one, then commit**
 
 ```bash
-cd $RC && git grep -n -i -E 'flock|aviation' || echo clean
+cd $RC && git grep -n -o -E '(github\.com|github>)[/]?[A-Za-z0-9_-]+' | grep -v -E '(github\.com/|github>)(Fomiller|NixOS|numtide|renovatebot)' || echo clean
 git add -A && git commit -m "feat(FOM-51): add the Kargo project that promotes pack versions
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
