@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Bumps flake-hub pack pins. Each pack is tagged <pack>-<semver> on one repo, so the version match must be anchored per pack.",
+  "description": "Bumps flake-hub pack pins. Each pack is tagged <pack>-<semver> on one repo, so the versioning keeps each pin on its own pack's tags.",
   "nix": {
     "enabled": false
   },
@@ -9,12 +9,11 @@
       "customType": "regex",
       "managerFilePatterns": ["/(^|/)flake\\.nix$/"],
       "matchStrings": [
-        "(?<depName>golden-[a-z0-9-]+)\\.url\\s*=\\s*\"github:Fomiller/flake-hub\\?dir=\\k<depName>&ref=refs/tags/(?<currentValue>\\k<depName>-[0-9]+\\.[0-9]+\\.[0-9]+)\""
+        "(?<depName>golden-[a-z0-9-]+)\\.url\\s*=\\s*\"github:Fomiller/flake-hub\\?dir=golden-[a-z0-9-]+&ref=refs/tags/(?<currentValue>golden-[a-z0-9-]+-[0-9]+\\.[0-9]+\\.[0-9]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "packageNameTemplate": "Fomiller/flake-hub",
-      "extractVersionTemplate": "^{{{depName}}}-(?<version>.+)$",
-      "versioningTemplate": "semver"
+      "versioningTemplate": "regex:^(?<compatibility>golden-[a-z0-9-]+)-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
     }
   ]
 }

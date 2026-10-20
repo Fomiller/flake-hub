@@ -1,14 +1,16 @@
 """The customManagers regex is the one piece of Renovate config that is easy
-to get subtly wrong: a loose version group bumps golden-github pins to
-golden-infra tags. These tests run the regex, and resolve the templates, the
-same way Renovate does."""
+to get subtly wrong: a loose version match bumps golden-github pins to
+golden-infra tags. These tests run the patterns through RE2, the engine
+Renovate uses, and resolve the templates the same way Renovate does."""
 
 import json
-import re
 from pathlib import Path
+
+import re2
 
 PRESET = json.loads((Path(__file__).parent.parent / "default.json").read_text())
 MANAGER = PRESET["customManagers"][0]
+VERSIONING = MANAGER["versioningTemplate"].removeprefix("regex:")
 
 FLAKE = """{
   inputs = {
@@ -20,21 +22,13 @@ FLAKE = """{
 """
 
 
-def to_python_re(pattern: str) -> str:
-    """Renovate runs these patterns through JS. Python spells the same two
-    constructs differently, so translate rather than keeping a second copy of
-    the pattern that could drift from the one Renovate actually uses."""
-    pattern = re.sub(r"\(\?<(?![=!])", "(?P<", pattern)
-    return re.sub(r"\\k<(\w+)>", r"(?P=\1)", pattern)
-
-
 def deps():
     """Renovate builds a dep from the named capture groups, then lets any
     *Template field overwrite the field of the same name. Resolving templates
     against the groups alone would hide exactly that overwrite."""
     out = []
     for pattern in MANAGER["matchStrings"]:
-        for m in re.finditer(to_python_re(pattern), FLAKE, re.MULTILINE):
+        for m in re2.finditer(pattern, FLAKE):
             dep = dict(m.groupdict())
             for field in ("depName", "packageName", "datasource", "versioning"):
                 template = MANAGER.get(f"{field}Template")
@@ -44,8 +38,16 @@ def deps():
     return out
 
 
-def render(template: str, dep: dict) -> str:
-    return re.sub(r"\{\{\{(\w+)\}\}\}", lambda m: dep[m.group(1)], template)
+def compatibility(tag):
+    m = re2.match(VERSIONING, tag)
+    return m and m.group("compatibility")
+
+
+def test_every_pattern_compiles_under_re2():
+    """RE2 has no backreferences. A pattern Python accepts can still make
+    Renovate reject the whole repo config."""
+    for pattern in MANAGER["matchStrings"] + [VERSIONING]:
+        re2.compile(pattern)
 
 
 def test_every_pack_pin_is_matched():
@@ -53,6 +55,8 @@ def test_every_pack_pin_is_matched():
 
 
 def test_current_value_is_the_full_prefixed_tag():
+    """The update replaces currentValue with the new tag. A bare semver here
+    would leave the prefix in place and rewrite only the numbers."""
     assert sorted(d["currentValue"] for d in deps()) == [
         "golden-engine-0.1.0",
         "golden-github-1.2.3",
@@ -64,27 +68,19 @@ def test_datasource_is_github_tags_on_the_hub():
     assert MANAGER["packageNameTemplate"] == "Fomiller/flake-hub"
 
 
-def test_extract_version_is_anchored_to_the_pack_directory():
-    """Without the per-pack anchor, a golden-infra tag is a candidate upgrade
-    for a golden-github pin, because both are tags on the same repo. This is
-    why the pack name must reach extractVersionTemplate as depName: setting
-    depNameTemplate would overwrite it with the repo slug and the anchor would
-    match no tag at all."""
+def test_versioning_parses_every_pinned_tag():
     for dep in deps():
-        resolved = render(MANAGER["extractVersionTemplate"], dep)
-        assert resolved.startswith(f"^{dep['currentValue'].rsplit('-', 1)[0]}-")
-        assert re.match(to_python_re(resolved), dep["currentValue"]).group("version") is not None
+        m = re2.match(VERSIONING, dep["currentValue"])
+        assert m is not None
+        assert {"major", "minor", "patch"} <= set(m.groupdict())
 
 
-def test_a_pin_only_matches_when_the_directory_and_the_tag_prefix_agree():
-    """The \\k<depName> backreference is what stops a golden-github directory
-    pinned to a golden-infra tag from being treated as a valid pin."""
-    crossed = FLAKE.replace(
-        "dir=golden-github&ref=refs/tags/golden-github-1.2.3",
-        "dir=golden-github&ref=refs/tags/golden-infra-1.2.3",
-    )
-    pattern = to_python_re(MANAGER["matchStrings"][0])
-    assert len(re.findall(pattern, crossed, re.MULTILINE)) == 1
+def test_another_packs_tag_is_never_a_candidate():
+    """Every pack's tags come back from the same repo. Renovate only treats a
+    tag as an upgrade when its compatibility group matches the pin's."""
+    assert compatibility("golden-github-1.2.3") == "golden-github"
+    assert compatibility("golden-github-2.0.0") == compatibility("golden-github-1.2.3")
+    assert compatibility("golden-infra-9.9.9") != compatibility("golden-github-1.2.3")
 
 
 def test_nix_manager_is_disabled():

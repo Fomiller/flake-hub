@@ -12,7 +12,7 @@
         let pkgs = nixpkgs.legacyPackages.${system}; in
         {
           checks.renovate-preset = pkgs.runCommand "renovate-preset-tests"
-            { nativeBuildInputs = [ pkgs.python3Packages.pytest ]; }
+            { nativeBuildInputs = [ (pkgs.python3.withPackages (p: [ p.pytest p.google-re2 ])) ]; }
             ''
               cp -r ${./.} renovate && chmod -R +w renovate && cd renovate
               pytest tests/preset_test.py -q
