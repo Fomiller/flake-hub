@@ -25,9 +25,10 @@ sees is the actual change, not a version bump they have to imagine.
 | `golden-argocd` | `github:Fomiller/flake-hub?dir=golden-argocd&ref=refs/tags/golden-argocd-<version>` |
 | `golden-docs` | `github:Fomiller/flake-hub?dir=golden-docs&ref=refs/tags/golden-docs-<version>` |
 
-Every pack is tagged `<pack>-<semver>` on this one repo. That is why the
-Renovate preset anchors its version match per pack: the tags all share a
-namespace.
+Every pack is tagged `<pack>-<semver>` on this one repo. The tags all share a
+namespace, so the Renovate preset in
+[renovate-config](https://github.com/Fomiller/renovate-config) matches versions
+per pack.
 
 ## The three files a repo holds
 
