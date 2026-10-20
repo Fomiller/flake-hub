@@ -12,7 +12,9 @@ nix run github:Fomiller/flake-hub?dir=golden-base#init -- \
 `--packs` takes the pack names without the `golden-` prefix, comma separated.
 `golden-engine` and `golden-base` are always included. The command writes
 `flake.nix` and `repo.nix` and refuses to overwrite either if it already
-exists.
+exists. Each pin is the version last promoted in
+[renovate-config](https://github.com/Fomiller/renovate-config), read from its
+`versions/nix-flakes/<pack>.yaml`. `init` fails if it cannot read one.
 
 A pack input is one line — no `follows`. A consumer reads only `<pack>.pack`,
 which is a plain import of the pack's `pack.nix`, so a pack flake's own
