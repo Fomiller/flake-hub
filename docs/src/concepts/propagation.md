@@ -8,9 +8,10 @@ flowchart TD
     B --> C[Kargo promotes it in renovate-config]
     C --> C2[Renovate sees the new pin]
     C2 --> D[PR on each pinned repo: the flake.nix pin only]
-    D --> E[the repo's generate.yml relocks and regenerates]
-    E --> F[bot commits flake.lock and the files into the same PR]
-    F --> G[review sees pins and files together]
+    D --> E[the repo's generate.yml finds drift]
+    E --> F[Regenerate pushes flake.lock and the files into the same PR]
+    F --> F2[checks run again and Drift Check passes]
+    F2 --> G[review sees pins and files together]
 ```
 
 ## Tags
@@ -38,11 +39,12 @@ Renovate changes only the pin in `flake.nix`. It does not touch `flake.lock` or
 any generated file. Teaching it to regenerate would mean giving it the whole
 engine.
 
-Instead the consumer's `generate.yml` runs on the PR, updates `flake.lock`,
-regenerates, and commits the result back. It commits only when `github.actor`,
-the account that triggered the run, is `fomiller-renovate-bot[bot]`. On any
-other run it reports drift without committing.
+Instead the consumer's `generate.yml` runs on every push and PR. Its Drift
+Check job relocks, regenerates, and fails if anything changed. When it fails,
+the Regenerate job pushes the fix to the same branch.
 
-The commit-back uses the workflow's `GITHUB_TOKEN`. Pushes made with that token
-do not trigger further workflow runs, which is the loop prevention: the bot
-commit cannot start another generate run that makes another bot commit.
+Regenerate pushes with a token from the `fomiller-renovate-bot` App, not
+`GITHUB_TOKEN`. A `GITHUB_TOKEN` push starts no workflows, so checks would never
+run on the fixed commit. An App token push does start them. Drift Check then
+reruns, finds nothing to change, and passes. Because it pushes nothing, the loop
+ends there.

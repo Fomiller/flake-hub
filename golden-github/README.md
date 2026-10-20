@@ -10,7 +10,7 @@ other repo.
 | --- | --- | --- |
 | `CODEOWNERS` | managed | `* <owners>`, from `github.codeowners` |
 | `renovate.json` | managed | extends `github>Fomiller/renovate-config` |
-| `.github/workflows/generate.yml` | managed | regenerates on PRs touching `flake.nix`, `flake.lock` or `repo.nix`; commits back only on Renovate's PRs |
+| `.github/workflows/generate.yml` | managed | Drift Check on every push and PR; Regenerate pushes the fix with the Renovate App token. Needs `RENOVATE_APP_ID` and `RENOVATE_APP_PRIVATE_KEY` repo secrets |
 | `.github/workflows/ci.yml` | managed | one job per entry in `ci.jobs`; not emitted at all when no pack contributed one |
 | `.github/workflows/publish-image.yml` | managed | builds the image on PRs, pushes to ECR on main; off unless `github.publishImage` |
 | `.github/workflows/publish-chart.yml` | managed | packages every `helm/*/Chart.yaml` on PRs, pushes to ECR on main; off unless `github.publishChart` |
