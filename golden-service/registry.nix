@@ -1,7 +1,7 @@
 {
   languages = {
     go = {
-      buildImage = "golang:1.23";
+      buildImage = "golang:1.27";
       runtimeImage = "gcr.io/distroless/static-debian12";
       setupStep = ''
         - uses: actions/setup-go@v5
