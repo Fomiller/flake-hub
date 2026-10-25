@@ -56,6 +56,12 @@ and deployed before it merges. Off the default branch it cuts the stable release
 a merge would have cut. Which one you get is the branch, never a choice at
 dispatch time, so a prerelease cannot reach main by mistake.
 
+When a repo turns on both, a push to main that changes the image makes the
+chart wait for that commit's image to publish. Kargo pairs the newest chart
+with the newest image it can see. A chart that lands first ships with the
+previous image, and a chart that needs something new from the image breaks.
+If the image fails, the chart does not publish.
+
 They live here rather than in `golden-argocd` because they publish artifacts
 and never write one. `golden-argocd` bootstraps a repo's chart and then leaves
 it alone, so a workflow it owned would be the one managed file left reaching
