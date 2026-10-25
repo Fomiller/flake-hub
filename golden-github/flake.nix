@@ -196,6 +196,9 @@
                 grep -q 'workflow_dispatch' ".github/workflows/$f"
                 grep -q 'release-rc:.*ref_name != .*default_branch' ".github/workflows/$f"
               done
+              # Kargo pairs the newest chart with the newest image, so a chart
+              # published before its image deploys against the old one.
+              grep -q 'needs: wait-for-image' .github/workflows/publish-chart.yml
               actionlint .github/workflows/*.yml
               touch $out
             '';
